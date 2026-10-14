@@ -1,0 +1,46 @@
+body :not(input):not(textarea):not(select):not(:disabled) {
+  cursor: url("hardhub-cursor.svg") 14 2, auto;
+}
+
+body button:disabled,
+body button:disabled *,
+body [aria-disabled="true"],
+body [aria-disabled="true"] * {
+  cursor: not-allowed;
+}
+
+.hh-click-ripple {
+  position: fixed;
+  z-index: 2147483647;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(181, 255, 112, .95);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(181, 255, 112, .4), inset 0 0 7px rgba(181, 255, 112, .24);
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(.3);
+  animation: hh-click-ripple .72s cubic-bezier(.12, .65, .35, 1) forwards;
+}
+
+.hh-click-ripple::after {
+  position: absolute;
+  content: "";
+  inset: -8px;
+  border: 1px solid rgba(181, 255, 112, .65);
+  border-radius: inherit;
+  animation: hh-click-ripple-ring .58s .08s ease-out forwards;
+}
+
+@keyframes hh-click-ripple {
+  0% { opacity: .95; transform: translate(-50%, -50%) scale(.3) }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(5) }
+}
+
+@keyframes hh-click-ripple-ring {
+  0% { opacity: .8; transform: scale(.5) }
+  100% { opacity: 0; transform: scale(1.9) }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hh-click-ripple { display: none }
+}

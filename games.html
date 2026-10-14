@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HardHub | محاكي الشبكات والجيمينج</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/click-ripple.css" />
+  <link rel="stylesheet" href="assets/hardhub-experience.css" />
+  <script src="assets/click-ripple.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Tahoma, Arial, sans-serif;
+    }
+
+    :root {
+      --primary: #00c6ff;
+      --secondary: #70eaff;
+      --purple: #9e8cff;
+      --dark: #07111f;
+      --text: #ffffff;
+      --muted: #d2e2ee;
+      --border: rgba(255, 255, 255, 0.18);
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--dark);
+      overflow-x: hidden;
+      isolation: isolate;
+    }
+
+    button, a {
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .background-video {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: var(--dark);
+      pointer-events: none;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: linear-gradient(
+        135deg,
+        rgba(4, 12, 28, 0.58),
+        rgba(15, 23, 55, 0.48),
+        rgba(0, 100, 120, 0.32)
+      );
+    }
+
+    /* واجهة البداية (شاشة الشعار) */
+    .welcome-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(7, 17, 31, 0.95);
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      transition: opacity 0.5s ease;
+    }
+
+    .welcome-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .start-logo-btn {
+      background: transparent;
+      border: 2px solid var(--secondary);
+      border-radius: 25px;
+      padding: 20px 40px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      box-shadow: 0 0 30px rgba(112, 234, 255, 0.3);
+      transition: 0.3s;
+    }
+
+    .start-logo-btn:hover {
+      background: rgba(0, 198, 255, 0.15);
+      transform: scale(1.05);
+      box-shadow: 0 0 50px rgba(0, 198, 255, 0.6);
+    }
+
+    .start-logo-btn img {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px rgba(255,255,255,0.5));
+    }
+
+    .start-logo-btn span {
+      color: var(--secondary);
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    header {
+      position: sticky;
+      top: 20px;
+      z-index: 100;
+      width: 92%;
+      max-width: 1250px;
+      margin: 20px auto 0;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+    }
+
+    .logo {
+      color: var(--secondary);
+      font-size: 1.25rem;
+      font-weight: bold;
+      white-space: nowrap;
+      text-shadow: 0 0 15px rgba(112, 234, 255, 0.5);
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    nav a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    nav a:hover, nav a.active {
+      color: var(--secondary);
+    }
+
+    .page {
+      display: none;
+      width: 92%;
+      max-width: 1300px;
+      min-height: 75vh;
+      margin: 40px auto;
+      padding: 35px;
+      border: 1px solid var(--border);
+      border-radius: 25px;
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(14px);
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .page-title {
+      background: linear-gradient(90deg, #ffffff, #66e8ff, var(--purple));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .page-description {
+      color: #d9e8f5;
+      margin-bottom: 25px;
+    }
+
+    .game-workspace {
+      display: grid;
+      grid-template-columns: 310px minmax(0, 1fr);
+      gap: 25px;
+      width: 100%;
+    }
+
+    .parts-sidebar {
+      min-height: 600px;
+      max-height: 600px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(0, 0, 0, 0.45);
+    }
+
+    .sidebar-title {
+      margin-bottom: 6px;
+      color: var(--secondary);
+      font-weight: bold;
+    }
+
+    .game-btn-part {
+      width: 100%;
+      padding: 11px 14px;
+      display: flex;
+      justify-content: space-between;
+      color: white;
+      text-align: right;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .game-btn-part:hover:not(:disabled) {
+      border-color: var(--secondary);
+      background: rgba(0, 198, 255, 0.25);
+    }
+
+    .game-btn-part:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      height: 600px;
+      border: 2px solid var(--secondary);
+      border-radius: 20px;
+      background: radial-gradient(circle at center, #0d233a 0%, #030a14 100%);
+    }
+
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+
+    .canvas-overlay-msg {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      z-index: 10;
+      padding: 10px 18px;
+      color: var(--secondary);
+      border: 1px solid var(--secondary);
+      border-radius: 12px;
+      background: rgba(7, 17, 31, 0.92);
+      pointer-events: none;
+    }
+
+    .game-message {
+      display: none;
+      margin-top: 20px;
+      padding: 16px;
+      color: #caffca;
+      text-align: center;
+      border: 1px solid #32d74b;
+      border-radius: 14px;
+      background: rgba(19, 185, 19, 0.13);
+    }
+
+    .game-message.visible {
+      display: block;
+    }
+
+    .pc-modal, .tracer-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(4, 12, 28, 0.88);
+      backdrop-filter: blur(10px);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pc-modal.active, .tracer-modal.active {
+      display: flex;
+    }
+
+    .pc-window {
+      width: 90%;
+      max-width: 650px;
+      background: #0d1b2a;
+      border: 2px solid var(--primary);
+      border-radius: 16px;
+      padding: 30px;
+      color: white;
+      box-shadow: 0 0 40px rgba(0, 198, 255, 0.4);
+    }
+
+    .pc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .pc-header h3 {
+      color: var(--secondary);
+    }
+
+    .close-pc {
+      background: transparent;
+      border: none;
+      color: #ff4d4d;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+      font-size: 1rem;
+    }
+
+    .ping-result {
+      margin-top: 15px;
+      padding: 12px;
+      background: rgba(0, 255, 0, 0.1);
+      border: 1px solid #32d74b;
+      border-radius: 8px;
+      color: #caffca;
+      display: none;
+      font-family: monospace;
+    }
+
+    .tracer-window {
+      width: 90%;
+      max-width: 750px;
+      background: #090e17;
+      border: 2px solid #00c6ff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(0, 198, 255, 0.3);
+    }
+
+    .tracer-topbar {
+      background: #111b2b;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tracer-topbar span {
+      color: var(--secondary);
+      font-weight: bold;
+    }
+
+    .close-tracer {
+      background: transparent;
+      border: none;
+      color: #ff4d4d;
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+
+    .tracer-body {
+      padding: 20px;
+      height: 380px;
+      overflow-y: auto;
+      font-family: monospace;
+      color: #33ff33;
+      background: #02050a;
+      font-size: 0.95rem;
+    }
+
+    .tracer-footer {
+      padding: 12px 20px;
+      background: #111b2b;
+      display: flex;
+      gap: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .tracer-footer input {
+      flex: 1;
+      padding: 10px;
+      background: #07111f;
+      border: 1px solid var(--border);
+      color: white;
+      border-radius: 6px;
+      font-family: monospace;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      color: white;
+      border: 0;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .game-workspace {
+        grid-template-columns: minmax(0, 1fr);
+        min-width: 0;
+      }
+
+      .parts-sidebar {
+        min-width: 0;
+        min-height: 0;
+        max-height: 260px;
+      }
+
+      .canvas-wrapper {
+        min-width: 0;
+        height: min(600px, 65vh);
+        min-height: 360px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      header {
+        top: 8px;
+        width: 96%;
+        padding: 12px;
+      }
+
+      .logo {
+        font-size: 0.9rem;
+      }
+
+      nav {
+        gap: 8px;
+      }
+
+      nav a {
+        font-size: 0.75rem;
+      }
+
+      .page {
+        width: 96%;
+        margin: 20px auto;
+        padding: 20px 14px;
+      }
+
+      .page-title {
+        font-size: 1.5rem;
+      }
+
+      .canvas-wrapper {
+        min-height: 320px;
+      }
+
+      .tracer-footer {
+        flex-wrap: wrap;
+      }
+    }
+    body, a, button, [role="button"] {
+      cursor: url("assets/hardhub-cursor.svg") 14 2, auto;
+    }
+    input, textarea {
+      cursor: text;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .background-video {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <video class="background-video" autoplay muted loop playsinline aria-hidden="true" tabindex="-1"><source src="assets/green-plasma-background.mp4" type="video/mp4"></video>
+  <div class="overlay" aria-hidden="true"></div>
+
+  <header>
+    <div class="logo">HardHub - PACKET TRACER</div>
+    <nav>
+      <a href="#" id="openTracerCli">💻 محاكي سطر الأوامر CLI</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page active" id="game-page">
+      <h2 class="page-title">🌐 محاكاة شبكات الحاسوب وشاشات الجيمينج</h2>
+      <p class="page-description">قم بتركيب الأجهزة، ثم انقر على أي جهاز كمبيوتر (PC) لفتح إعدادات الـ IP واختبار الاتصال (Ping).</p>
+
+      <div class="game-workspace" id="game-workspace">
+        <div class="parts-sidebar" id="parts-sidebar">
+          <div class="sidebar-title">🛠️ أجهزة وعناصر الشبكة والحاسوب</div>
+          <button class="game-btn-part" id="btn-case"><span>📦 الكيس الرئيسي (PC)</span></button>
+          <button class="game-btn-part" id="btn-fans" disabled><span>🌀 مراوح التبريد RGB</span></button>
+          <button class="game-btn-part" id="btn-mobo" disabled><span>🧩 اللوحة الأم</span></button>
+          <button class="game-btn-part" id="btn-cpu" disabled><span>🧠 المعالج CPU</span></button>
+          <button class="game-btn-part" id="btn-ram" disabled><span>⚡ الرام RAM</span></button>
+          <button class="game-btn-part" id="btn-gpu" disabled><span>🎮 كرت الشاشة GPU</span></button>
+          <button class="game-btn-part" id="btn-storage" disabled><span>💾 وحدة التخزين SSD</span></button>
+          <button class="game-btn-part" id="btn-psu" disabled><span>🔌 مزود الطاقة PSU</span></button>
+          <button class="game-btn-part" id="btn-desk" disabled><span>🪑 طاولة الجيمينج الواسعة</span></button>
+          <button class="game-btn-part" id="btn-monitor" disabled><span>🖥️ إعداد الشاشات المزدوجة</span></button>
+          <button class="game-btn-part" id="btn-speakers" disabled><span>🔊 السماعات</span></button>
+          <button class="game-btn-part" id="btn-headphones" disabled><span>🎧 السماعة الرأسية</span></button>
+          <button class="game-btn-part" id="btn-keyboard" disabled><span>⌨️ الكيبورد</span></button>
+          <button class="game-btn-part" id="btn-mouse" disabled><span>🖱️ الماوس</span></button>
+          
+          <button class="game-btn-part" id="btn-router" disabled><span>📡 راوتر الشبكة (خلف السحابة)</span></button>
+          <button class="game-btn-part" id="btn-switch" disabled><span>🖧 سويتش الشبكة (خلف السحابة)</span></button>
+          <button class="game-btn-part" id="btn-ap" disabled><span>📶 نقطة الاتصال AP (خلف السحابة)</span></button>
+          <button class="game-btn-part" id="btn-server" disabled><span>🗄️ سيرفر البيانات</span></button>
+          <button class="game-btn-part" id="btn-phone" disabled><span>📱 الهاتف الذكي</span></button>
+          <button class="game-btn-part" id="btn-printer" disabled><span>🖨️ الطابعة الشبكية</span></button>
+          <button class="game-btn-part" id="btn-cloud" disabled><span>☁️ السحابة وتوصيل الأسلاك</span></button>
+
+          <button class="game-btn-part" id="btn-addpc" style="background: rgba(0, 198, 255, 0.15); border-color: var(--primary);" disabled><span>➕ إضافة جهاز كمبيوتر آخر (PC)</span></button>
+        </div>
+
+        <div class="canvas-wrapper" id="canvas-wrapper">
+          <div class="canvas-overlay-msg" id="game-status-msg">قم بتركيب: الكيس الرئيسي أولاً</div>
+          <div id="canvas-container"></div>
+        </div>
+      </div>
+
+      <div class="game-message" id="game-message">
+        🎉 تم إكمال الشبكة بنجاح! انقر على أي كمبيوتر في الشاشة لضبط الـ IP وفحص الاتصال.<br>
+        <button class="btn" id="openCliFromComplete" style="margin-top: 15px;">💻 فتح واجهة CLI لفحص الاتصال (Ping)</button>
+      </div>
+
+      <div class="controls">
+        <button class="btn" id="reset-game-button" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border);">🔄 إعادة إعداد الشبكة</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- نافذة إعدادات الكمبيوتر والـ IP -->
+  <div class="pc-modal" id="pcModal">
+    <div class="pc-window">
+      <div class="pc-header">
+        <h3 id="pcModalTitle">إعدادات جهاز الكمبيوتر - IP Configuration</h3>
+        <button class="close-pc" id="closePcModal">&times;</button>
+      </div>
+      <p style="margin-bottom: 15px; color: var(--muted); font-size: 0.9rem;">أدخل عنوان بروتوكول الإنترنت (IP Address) وقناع الشبكة لإعداد الكمبيوتر:</p>
+      
+      <div class="form-group">
+        <label>عنوان IPv4 Address:</label>
+        <input type="text" id="inputIpAddress" value="192.168.1.10">
+      </div>
+      <div class="form-group">
+        <label>قناع الشبكة Subnet Mask:</label>
+        <input type="text" id="inputSubnetMask" value="255.255.255.0">
+      </div>
+      <div class="form-group">
+        <label>البوابة الافتراضية Default Gateway:</label>
+        <input type="text" id="inputGateway" value="192.168.1.1">
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button class="btn" id="savePcIpBtn" style="flex: 1;">💾 حفظ إعدادات الـ IP</button>
+        <button class="btn" id="testPcPingBtn" style="background: linear-gradient(135deg, #32d74b, #28a745); flex: 1;">⚡ اختبار الاتصال (Ping)</button>
+      </div>
+
+      <div class="ping-result" id="pcPingResult">
+        Pinging 192.168.1.100 with 32 bytes of data:<br>
+        Reply from 192.168.1.100: bytes=32 time=2ms TTL=128<br>
+        ✅ تم الاتصال بنجاح (Ping Successful)!
+      </div>
+    </div>
+  </div>
+
+  <div class="tracer-modal" id="tracerModal">
+    <div class="tracer-window">
+      <div class="tracer-topbar">
+        <span>Cisco Packet Tracer - Command Line Interface (CLI)</span>
+        <button class="close-tracer" id="closeTracer">&times;</button>
+      </div>
+      <div class="tracer-body" id="cliOutput">
+        Cisco IOS Software, Version 12.4<br>
+        Type 'help' or '?' for a list of available commands.<br>
+        Router> enable<br>
+        Router#<br>
+      </div>
+      <div class="tracer-footer">
+        <input type="text" id="cliInput" placeholder="اكتب أمراً مثل: ping 192.168.1.100 أو ipconfig">
+        <button class="btn" id="sendCmd">تنفيذ</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    جميع الحقوق محفوظة © HardHub - محاكي الشبكات
+  </footer>
+
+  <script>
+    let scene, camera, renderer, setupGroup;
+    let gameCanvasResizeObserver;
+    let meshCaseMain, meshCaseFront, meshGlassPanel, caseBodyMaterial, caseFrontMaterial, caseRgbLight, fansGroup;
+    let meshMobo, meshCpu, meshRam, meshGpu, meshStorage, meshPsu, meshDesk, meshDualMonitors;
+    let meshSpeakerL, meshSpeakerR, meshHeadphones, meshKeyboard, meshMouse, meshMousepad;
+    let meshRouter, meshSwitch, meshAP, meshServer, meshPhone, meshPrinter, cloudGroupRef, panAtomicGroup, networkCablesGroup;
+    
+    let extraPCs = [];
+    let raycaster = new THREE.Raycaster();
+    let mouse = new THREE.Vector2();
+
+    let installedSteps = [];
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+    let targetRotationY = 0;
+    let targetRotationX = 0;
+
+    const stepsOrder = [
+      "case", "fans", "mobo", "cpu", "ram", "gpu", "storage", "psu", "desk", "monitor",
+      "speakers", "headphones", "keyboard", "mouse", "router", "switch", "ap", "server", "phone", "printer", "cloud"
+    ];
+
+    const stepNames = {
+      case: "الكيس الرئيسي", fans: "مراوح التبريد RGB", mobo: "اللوحة الأم", cpu: "المعالج", ram: "الرام", gpu: "كرت الشاشة",
+      storage: "التخزين", psu: "مزود الطاقة", desk: "طاولة الجيمينج", monitor: "شاشات الجيمينج المزدوجة",
+      speakers: "السماعات", headphones: "السماعة الرأسية", keyboard: "الكيبورد", mouse: "الماوس",
+      router: "راوتر الشبكة", switch: "سويتش الشبكة", ap: "نقطة الاتصال AP", server: "السيرفر",
+      phone: "الهاتف الذكي", printer: "الطابعة", cloud: "السحابة والأسلاك"
+    };
+
+    const defaultLabels = {
+      case: "📦 الكيس الرئيسي", fans: "🌀 مراوح التبريد RGB", mobo: "🧩 اللوحة الأم", cpu: "🧠 المعالج CPU", ram: "⚡ الرام RAM",
+      gpu: "🎮 كرت الشاشة GPU", storage: "💾 وحدة التخزين SSD", psu: "🔌 مزود الطاقة PSU", desk: "🪑 طاولة الجيمينج الواسعة",
+      monitor: "🖥️ إعداد الشاشات المزدوجة", speakers: "🔊 السماعات", headphones: "🎧 السماعة الرأسية", keyboard: "⌨️ الكيبورد",
+      mouse: "🖱️ الماوس", router: "📡 راوتر الشبكة", switch: "🖧 سويتش الشبكة", ap: "📶 نقطة الاتصال AP",
+      server: "🗄️ سيرفر البيانات", phone: "📱 الهاتف الذكي", printer: "🖨️ الطابعة الشبكية", cloud: "☁️ السحابة والأسلاك"
+    };
+
+    function resizeThreeCanvas() {
+      const container = document.getElementById("canvas-container");
+      if (!container || !renderer || !camera) return;
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      if (width <= 0 || height <= 0) return;
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    }
+
+    function createTextSprite(message) {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = 256;
+      canvas.height = 64;
+      context.fillStyle = 'rgba(7, 17, 31, 0.85)';
+      context.roundRect(10, 10, 236, 44, 10);
+      context.fill();
+      context.lineWidth = 3;
+      context.strokeStyle = '#00c6ff';
+      context.stroke();
+
+      context.font = 'bold 20px Tahoma';
+      context.fillStyle = '#ffffff';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText(message, 128, 32);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
+      const sprite = new THREE.Sprite(spriteMaterial);
+      sprite.scale.set(0.9, 0.3, 1);
+      return sprite;
+    }
+
+    function init3DScene() {
+      const container = document.getElementById("canvas-container");
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+      camera.position.set(0, 3.8, 8.2);
+      camera.lookAt(0, 0.8, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+      const directionalLight = new THREE.DirectionalLight(0x70eaff, 1.2);
+      directionalLight.position.set(5, 8, 5);
+      scene.add(directionalLight);
+
+      setupGroup = new THREE.Group();
+      scene.add(setupGroup);
+
+      buildMeshes();
+      resizeThreeCanvas();
+      gameCanvasResizeObserver = new ResizeObserver(resizeThreeCanvas);
+      gameCanvasResizeObserver.observe(container);
+      window.addEventListener("resize", resizeThreeCanvas);
+
+      container.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+      });
+
+      window.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        const deltaX = e.clientX - previousMousePosition.x;
+        const deltaY = e.clientY - previousMousePosition.y;
+        targetRotationY += deltaX * 0.008;
+        targetRotationX += deltaY * 0.008;
+        targetRotationX = Math.max(-0.5, Math.min(0.8, targetRotationX));
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+      });
+
+      window.addEventListener("mouseup", () => { isDragging = false; });
+
+      container.addEventListener("click", (event) => {
+        const rect = container.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(setupGroup.children, true);
+
+        if (intersects.length > 0) {
+          document.getElementById("pcModal").classList.add("active");
+        }
+      });
+
+      const clock = new THREE.Clock();
+      function animate() {
+        requestAnimationFrame(animate);
+        const time = clock.getElapsedTime();
+        if (setupGroup) {
+          if (!isDragging) targetRotationY += 0.003;
+          setupGroup.rotation.y += (targetRotationY - setupGroup.rotation.y) * 0.05;
+          setupGroup.rotation.x += (targetRotationX - setupGroup.rotation.x) * 0.05;
+        }
+        if (panAtomicGroup && panAtomicGroup.visible) panAtomicGroup.rotation.y = time * 0.4;
+        if (caseRgbLight && meshCaseMain.visible) caseRgbLight.color.setHSL((time * 0.2) % 1, 1, 0.5);
+        if (fansGroup && fansGroup.visible) fansGroup.rotation.z = time * 2;
+        renderer.render(scene, camera);
+      }
+      animate();
+    }
+
+    function buildMeshes() {
+      meshCaseMain = new THREE.Group();
+      caseBodyMaterial = new THREE.MeshPhysicalMaterial({ color: 0x050505, roughness: 0.28, metalness: 0.8, transparent: true, opacity: 0.25 });
+      caseFrontMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.25, metalness: 0.85 });
+
+      const caseBody = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.8, 1.6), caseBodyMaterial);
+      meshCaseFront = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.82, 0.08), caseFrontMaterial);
+      meshCaseFront.position.set(0, 0, 0.82);
+
+      meshGlassPanel = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, 1.7, 1.5),
+        new THREE.MeshPhysicalMaterial({ color: 0x70eaff, transparent: true, opacity: 0.15, roughness: 0.18, transmission: 0.3 })
+      );
+      meshGlassPanel.position.set(0.42, 0, 0);
+
+      caseRgbLight = new THREE.PointLight(0x00c6ff, 2, 3);
+      caseRgbLight.position.set(0, 0.2, 0);
+
+      meshCaseMain.add(caseBody, meshCaseFront, meshGlassPanel, caseRgbLight);
+      meshCaseMain.position.set(-1.8, 1, -0.4);
+      meshCaseMain.visible = false;
+      setupGroup.add(meshCaseMain);
+
+      fansGroup = new THREE.Group();
+      const fanMat = new THREE.MeshStandardMaterial({ color: 0x00c6ff, emissive: 0x0077b6 });
+      const fan1 = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.05, 16), fanMat);
+      fan1.rotation.x = Math.PI / 2;
+      fan1.position.set(0, 0.5, -0.7);
+      const fan2 = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.05, 16), fanMat);
+      fan2.rotation.x = Math.PI / 2;
+      fan2.position.set(0, -0.3, -0.7);
+      fansGroup.add(fan1, fan2);
+      fansGroup.position.set(-1.8, 1, -0.4);
+      fansGroup.visible = false;
+      setupGroup.add(fansGroup);
+
+      meshMobo = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.4, 1.2), new THREE.MeshStandardMaterial({ color: 0x0f3d2e }));
+      meshMobo.position.set(-1.95, 1.1, -0.4);
+      meshMobo.visible = false;
+      setupGroup.add(meshMobo);
+
+      meshCpu = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.3, 0.3), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 }));
+      meshCpu.position.set(-1.9, 1.3, -0.4);
+      meshCpu.visible = false;
+      setupGroup.add(meshCpu);
+
+      meshRam = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.4, 0.1), new THREE.MeshStandardMaterial({ color: 0x00c6ff, emissive: 0x0055aa }));
+      meshRam.position.set(-1.9, 1.3, -0.15);
+      meshRam.visible = false;
+      setupGroup.add(meshRam);
+
+      meshGpu = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 1), new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.85 }));
+      meshGpu.position.set(-1.8, 0.9, -0.4);
+      meshGpu.visible = false;
+      setupGroup.add(meshGpu);
+
+      meshStorage = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.15, 0.3), new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.6 }));
+      meshStorage.position.set(-1.9, 0.5, -0.2);
+      meshStorage.visible = false;
+      setupGroup.add(meshStorage);
+
+      meshPsu = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.4, 0.7), new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.3, metalness: 0.8 }));
+      meshPsu.position.set(-1.8, 0.3, -0.4);
+      meshPsu.visible = false;
+      setupGroup.add(meshPsu);
+
+      meshDesk = new THREE.Mesh(new THREE.BoxGeometry(6.8, 0.18, 4.0), new THREE.MeshStandardMaterial({ color: 0xf0f4f8, roughness: 0.2 }));
+      meshDesk.position.set(0, 0, -0.3);
+      meshDesk.visible = false;
+      setupGroup.add(meshDesk);
+
+      meshDualMonitors = new THREE.Group();
+      const standBase = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.08, 0.6), new THREE.MeshStandardMaterial({ color: 0x050505 }));
+      standBase.position.set(0, 0.12, -0.6);
+      
+      const monitorFrame1 = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.5, 0.1), new THREE.MeshStandardMaterial({ color: 0x050505 }));
+      monitorFrame1.position.set(0.8, 1.2, -0.6);
+      const monitorScreen1 = new THREE.Mesh(new THREE.PlaneGeometry(2.25, 1.35), new THREE.MeshBasicMaterial({ color: 0x0099ff }));
+      monitorScreen1.position.set(0.8, 1.2, -0.54);
+
+      const monitorFrame2 = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.3, 0.1), new THREE.MeshStandardMaterial({ color: 0x050505 }));
+      monitorFrame2.position.set(-1.4, 1.1, -0.7);
+      monitorFrame2.rotation.y = 0.3;
+      const monitorScreen2 = new THREE.Mesh(new THREE.PlaneGeometry(1.85, 1.15), new THREE.MeshBasicMaterial({ color: 0x7b2cbf }));
+      monitorScreen2.position.set(-1.4, 1.1, -0.64);
+      monitorScreen2.rotation.y = 0.3;
+
+      meshDualMonitors.add(standBase, monitorFrame1, monitorScreen1, monitorFrame2, monitorScreen2);
+      meshDualMonitors.visible = false;
+      setupGroup.add(meshDualMonitors);
+
+      const speakerMaterial = new THREE.MeshStandardMaterial({ color: 0x0a192f, roughness: 0.3, metalness: 0.7 });
+      meshSpeakerL = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.8, 0.4), speakerMaterial);
+      meshSpeakerL.position.set(-2.6, 0.5, -0.5);
+      meshSpeakerR = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.8, 0.4), speakerMaterial);
+      meshSpeakerR.position.set(2.2, 0.5, -0.5);
+      meshSpeakerL.visible = false; meshSpeakerR.visible = false;
+      setupGroup.add(meshSpeakerL, meshSpeakerR);
+
+      meshHeadphones = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.05, 12, 30, Math.PI), new THREE.MeshStandardMaterial({ color: 0x00c6ff }));
+      meshHeadphones.rotation.x = Math.PI / 2;
+      meshHeadphones.position.set(-2.6, 1.0, -0.5);
+      meshHeadphones.visible = false;
+      setupGroup.add(meshHeadphones);
+
+      meshKeyboard = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.06, 0.55), new THREE.MeshStandardMaterial({ color: 0x102a43, roughness: 0.35, metalness: 0.6 }));
+      meshKeyboard.position.set(0.4, 0.12, 0.4);
+      meshKeyboard.visible = false;
+      setupGroup.add(meshKeyboard);
+
+      meshMousepad = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.02, 0.65), new THREE.MeshStandardMaterial({ color: 0x24174d }));
+      meshMousepad.position.set(1.8, 0.1, 0.4);
+      meshMouse = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.1, 0.38), new THREE.MeshStandardMaterial({ color: 0x0077b6, roughness: 0.25, metalness: 0.8 }));
+      meshMouse.position.set(1.8, 0.15, 0.4);
+      meshMousepad.visible = false; meshMouse.visible = false;
+      setupGroup.add(meshMousepad, meshMouse);
+
+      meshRouter = new THREE.Group();
+      const rBody = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.15, 0.35), new THREE.MeshStandardMaterial({ color: 0xff6b00 }));
+      const rLabel = createTextSprite("Router");
+      rLabel.position.set(0, 0.3, 0);
+      meshRouter.add(rBody, rLabel);
+      meshRouter.position.set(0.8, 0.15, -2.4);
+      meshRouter.visible = false;
+      setupGroup.add(meshRouter);
+
+      meshSwitch = new THREE.Group();
+      const sBody = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.12, 0.35), new THREE.MeshStandardMaterial({ color: 0x00f5d4 }));
+      const sLabel = createTextSprite("Switch");
+      sLabel.position.set(0, 0.28, 0);
+      meshSwitch.add(sBody, sLabel);
+      meshSwitch.position.set(0.0, 0.15, -2.4);
+      meshSwitch.visible = false;
+      setupGroup.add(meshSwitch);
+
+      meshAP = new THREE.Group();
+      const apBody = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.28, 0.08, 16), new THREE.MeshStandardMaterial({ color: 0xffd166 }));
+      const apLabel = createTextSprite("Access Point");
+      apLabel.position.set(0, 0.25, 0);
+      meshAP.add(apBody, apLabel);
+      meshAP.position.set(-0.8, 0.15, -2.4);
+      meshAP.visible = false;
+      setupGroup.add(meshAP);
+
+      meshServer = new THREE.Group();
+      const srvBody = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.1, 0.5), new THREE.MeshStandardMaterial({ color: 0x7b2cbf }));
+      const srvLabel = createTextSprite("Server");
+      srvLabel.position.set(0, 0.75, 0);
+      meshServer.add(srvBody, srvLabel);
+      meshServer.position.set(-1.6, 0.6, -2.0);
+      meshServer.visible = false;
+      setupGroup.add(meshServer);
+
+      meshPhone = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.03, 0.38), new THREE.MeshStandardMaterial({ color: 0xff0054, roughness: 0.2 }));
+      meshPhone.position.set(1.2, 0.12, 0.7);
+      meshPhone.visible = false;
+      setupGroup.add(meshPhone);
+
+      meshPrinter = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.35, 0.5), new THREE.MeshStandardMaterial({ color: 0xadb5bd, roughness: 0.3 }));
+      meshPrinter.position.set(2.2, 0.22, -0.6);
+      meshPrinter.visible = false;
+      setupGroup.add(meshPrinter);
+
+      const cloudMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.65, 16, 16),
+        new THREE.MeshStandardMaterial({ color: 0xedf2f4, transparent: true, opacity: 0.9, roughness: 0.1 })
+      );
+      const cloudLabel = createTextSprite("Cloud");
+      cloudLabel.position.set(0, 0.85, 0);
+      const cloudGroup = new THREE.Group();
+      cloudGroup.add(cloudMesh, cloudLabel);
+      cloudGroup.position.set(1.8, 2.3, -2.1);
+      cloudGroup.visible = false;
+      setupGroup.add(cloudGroup);
+      window.cloudGroupRef = cloudGroup;
+
+      panAtomicGroup = new THREE.Group();
+      const coreNode = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), new THREE.MeshStandardMaterial({ color: 0x48cae4, emissive: 0x0077b6 }));
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x00c6ff, wireframe: true, transparent: true, opacity: 0.6 });
+      const orbit1 = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.015, 16, 30), ringMat);
+      orbit1.rotation.x = Math.PI / 3;
+      const orbit2 = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.015, 16, 30), ringMat);
+      orbit2.rotation.y = Math.PI / 4;
+      panAtomicGroup.add(coreNode, orbit1, orbit2);
+      panAtomicGroup.position.set(-2.0, 1.8, -1.9);
+      panAtomicGroup.visible = false;
+      setupGroup.add(panAtomicGroup);
+
+      networkCablesGroup = new THREE.Group();
+      const cableMaterial = new THREE.MeshBasicMaterial({ color: 0x00c6ff });
+
+      const cable1 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.6), cableMaterial);
+      cable1.position.set(-0.8, 0.12, -2.4);
+      cable1.rotation.z = Math.PI / 2;
+
+      const cable2 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.8), cableMaterial);
+      cable2.position.set(0.4, 0.12, -2.4);
+      cable2.rotation.z = Math.PI / 2;
+
+      networkCablesGroup.add(cable1, cable2);
+      networkCablesGroup.visible = false;
+      setupGroup.add(networkCablesGroup);
+      window.cablesRef = networkCablesGroup;
+    }
+
+    function installPiece(partId) {
+      const currentIndex = installedSteps.length;
+      if (currentIndex === 0 && partId === "case") {
+        installedSteps.push("case");
+        meshCaseMain.visible = true;
+        meshMobo.visible = true;
+        document.getElementById("btn-case").disabled = true;
+        document.getElementById("btn-case").innerHTML = "<span>✅ تم تركيب الكيس الرئيسي</span>";
+        document.getElementById("btn-fans").disabled = false;
+        document.getElementById("game-status-msg").textContent = "الكيس شفاف، قم بتركيب: مراوح التبريد RGB";
+        return;
+      }
+
+      const expectedPart = stepsOrder[currentIndex];
+      if (expectedPart !== partId) {
+        alert("الخطوة الصحيحة الآن هي: " + stepNames[expectedPart]);
+        return;
+      }
+
+      if (partId === "fans") fansGroup.visible = true;
+      if (partId === "mobo") meshMobo.visible = true;
+      if (partId === "cpu") meshCpu.visible = true;
+      if (partId === "ram") meshRam.visible = true;
+      if (partId === "gpu") meshGpu.visible = true;
+      if (partId === "storage") meshStorage.visible = true;
+      if (partId === "psu") meshPsu.visible = true;
+      if (partId === "desk") meshDesk.visible = true;
+      if (partId === "monitor") meshDualMonitors.visible = true;
+      if (partId === "speakers") { meshSpeakerL.visible = true; meshSpeakerR.visible = true; }
+      if (partId === "headphones") meshHeadphones.visible = true;
+      if (partId === "keyboard") meshKeyboard.visible = true;
+      if (partId === "mouse") { meshMousepad.visible = true; meshMouse.visible = true; }
+      if (partId === "router") meshRouter.visible = true;
+      if (partId === "switch") meshSwitch.visible = true;
+      if (partId === "ap") meshAP.visible = true;
+      if (partId === "server") meshServer.visible = true;
+      if (partId === "phone") meshPhone.visible = true;
+      if (partId === "printer") meshPrinter.visible = true;
+      if (partId === "cloud") {
+        if (window.cloudGroupRef) window.cloudGroupRef.visible = true;
+        if (window.cablesRef) window.cablesRef.visible = true;
+        panAtomicGroup.visible = true;
+        document.getElementById("btn-addpc").disabled = false;
+      }
+
+      installedSteps.push(partId);
+      const currentButton = document.getElementById("btn-" + partId);
+      if (currentButton) {
+        currentButton.disabled = true;
+        currentButton.style.background = "rgba(0, 198, 255, 0.2)";
+        currentButton.innerHTML = "<span>✅ تم تركيب " + stepNames[partId] + "</span>";
+      }
+
+      const internalParts = ["case", "fans", "mobo", "cpu", "ram", "gpu", "storage", "psu"];
+      const allInternalDone = internalParts.every(p => installedSteps.includes(p));
+      if (allInternalDone && caseBodyMaterial.opacity < 1) {
+        caseBodyMaterial.opacity = 1.0;
+        meshGlassPanel.material.opacity = 0.72;
+      }
+
+      const nextIndex = installedSteps.length;
+      if (nextIndex < stepsOrder.length) {
+        const nextPart = stepsOrder[nextIndex];
+        const nextButton = document.getElementById("btn-" + nextPart);
+        if (nextButton) nextButton.disabled = false;
+        let statusText = "قم بتركيب: " + stepNames[nextPart];
+        if (!allInternalDone) statusText += " (الكيس شفاف لرؤية القطع الداخلية)";
+        document.getElementById("game-status-msg").textContent = statusText;
+      } else {
+        completeGame();
+      }
+    }
+
+    function completeGame() {
+      document.getElementById("game-status-msg").textContent = "✨ تم إكمال إعداد الشاشات المزدوجة ومراوح الـ RGB والشبكة!";
+      document.getElementById("game-message").classList.add("visible");
+    }
+
+    document.getElementById("btn-addpc").addEventListener("click", () => {
+      const pcIndex = extraPCs.length + 1;
+      const pcGroup = new THREE.Group();
+
+      const miniCase = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.0, 0.9), new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8 }));
+      const miniMonitor = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.08), new THREE.MeshStandardMaterial({ color: 0x050505 }));
+      miniMonitor.position.set(0, 0.5, -0.3);
+
+      const pcLabel = createTextSprite("PC-" + (pcIndex + 1));
+      pcLabel.position.set(0, 1.2, 0);
+
+      pcGroup.add(miniCase, miniMonitor, pcLabel);
+
+      const posX = 2.4 + (pcIndex * 1.2);
+      pcGroup.position.set(posX, 0.5, 0.2);
+      setupGroup.add(pcGroup);
+      extraPCs.push(pcGroup);
+
+      const cableMat = new THREE.MeshBasicMaterial({ color: 0x00c6ff });
+      const linkCable = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 1.6), cableMat);
+      linkCable.position.set(posX - 0.6, 0.12, -1.2);
+      linkCable.rotation.x = Math.PI / 4;
+      setupGroup.add(linkCable);
+
+      document.getElementById("game-status-msg").textContent = "💻 تمت إضافة جهاز كمبيوتر جديد وتوصيله بالشبكة بنجاح!";
+    });
+
+    const pcModal = document.getElementById("pcModal");
+    document.getElementById("closePcModal").addEventListener("click", () => pcModal.classList.remove("active"));
+    document.getElementById("savePcIpBtn").addEventListener("click", () => {
+      alert("✅ تم حفظ عنوان الـ IP بنجاح على جهاز الكمبيوتر!");
+    });
+    document.getElementById("testPcPingBtn").addEventListener("click", () => {
+      document.getElementById("pcPingResult").style.display = "block";
+    });
+
+    function resetGame() {
+      installedSteps = [];
+      document.getElementById("game-workspace").classList.remove("completed");
+      document.getElementById("game-message").classList.remove("visible");
+      pcModal.classList.remove("active");
+
+      stepsOrder.forEach((id, index) => {
+        const button = document.getElementById("btn-" + id);
+        button.disabled = index !== 0;
+        button.style.background = "";
+        button.innerHTML = "<span>" + defaultLabels[id] + "</span>";
+      });
+
+      document.getElementById("btn-addpc").disabled = true;
+
+      extraPCs.forEach(pc => setupGroup.remove(pc));
+      extraPCs = [];
+
+      caseBodyMaterial.opacity = 0.25;
+      meshGlassPanel.material.opacity = 0.15;
+      meshCaseMain.visible = false;
+      if(fansGroup) fansGroup.visible = false;
+      meshMobo.visible = false; meshCpu.visible = false; meshRam.visible = false;
+      meshGpu.visible = false; meshStorage.visible = false; meshPsu.visible = false;
+      meshDesk.visible = false; meshDualMonitors.visible = false; meshSpeakerL.visible = false;
+      meshSpeakerR.visible = false; meshHeadphones.visible = false; meshKeyboard.visible = false;
+      meshMousepad.visible = false; meshMouse.visible = false;
+
+      if (meshRouter) meshRouter.visible = false;
+      if (meshSwitch) meshSwitch.visible = false;
+      if (meshAP) meshAP.visible = false;
+      if (meshServer) meshServer.visible = false;
+      if (meshPhone) meshPhone.visible = false;
+      if (meshPrinter) meshPrinter.visible = false;
+      if (window.cloudGroupRef) window.cloudGroupRef.visible = false;
+      if (window.cablesRef) window.cablesRef.visible = false;
+      if (panAtomicGroup) panAtomicGroup.visible = false;
+
+      document.getElementById("game-status-msg").textContent = "قم بتركيب: الكيس الرئيسي أولاً";
+      resizeThreeCanvas();
+    }
+
+    const tracerModal = document.getElementById("tracerModal");
+    const cliOutput = document.getElementById("cliOutput");
+    const cliInput = document.getElementById("cliInput");
+
+    function openCli() { tracerModal.classList.add("active"); }
+    document.getElementById("openTracerCli").addEventListener("click", openCli);
+    document.getElementById("openCliFromComplete").addEventListener("click", openCli);
+    document.getElementById("closeTracer").addEventListener("click", () => tracerModal.classList.remove("active"));
+
+    document.getElementById("sendCmd").addEventListener("click", executeCliCommand);
+    cliInput.addEventListener("keypress", (e) => { if (e.key === 'Enter') executeCliCommand(); });
+
+    function executeCliCommand() {
+      const val = cliInput.value.trim();
+      if (!val) return;
+      cliOutput.innerHTML += "<br>Router# " + val;
+      
+      if (val.toLowerCase() === 'ipconfig') {
+        cliOutput.innerHTML += "<br>IPv4 Address. . . . . . . . . . . : 192.168.1.10<br>Subnet Mask . . . . . . . . . . . : 255.255.255.0<br>Default Gateway . . . . . . . . . : 192.168.1.1";
+      } else if (val.toLowerCase().startsWith('ping')) {
+        cliOutput.innerHTML += "<br>Pinging target with 32 bytes of data:<br>Reply from 192.168.1.100: bytes=32 time<1ms TTL=128<br>Reply from 192.168.1.100: bytes=32 time<1ms TTL=128<br>Ping statistics: Packets: Sent = 2, Received = 2, Lost = 0 (0% loss)";
+      } else if (val.toLowerCase() === 'help' || val === '?') {
+        cliOutput.innerHTML += "<br>Available commands: ipconfig, ping [ip], enable, exit";
+      } else {
+        cliOutput.innerHTML += "<br>% Unknown command or syntax error. Type 'help' for instructions.";
+      }
+      
+      cliInput.value = '';
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+    }
+
+    document.querySelectorAll(".game-btn-part").forEach(button => {
+      const partId = button.id.replace("btn-", "");
+      if(partId !== "addpc") {
+        button.addEventListener("click", () => installPiece(partId));
+      }
+    });
+
+    document.getElementById("reset-game-button").addEventListener("click", resetGame);
+    init3DScene();
+  </script>
+</body>
+</html>

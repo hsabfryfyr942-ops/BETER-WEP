@@ -1,0 +1,12 @@
+{
+  "name": "hardhub-learning-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Arabic hardware learning website with 3D models, randomized level quizzes and Gemini tutor",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

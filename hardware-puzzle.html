@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HardHub | تحدي تركيب العتاد</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/click-ripple.css" />
+<link rel="stylesheet" href="assets/hardhub-experience.css" />
+<script src="assets/click-ripple.js" defer></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Tahoma,Arial,sans-serif}
+:root{--primary:#00c6ff;--secondary:#70eaff;--purple:#9e8cff;--dark:#07111f;--text:#fff;--muted:#d2e2ee;--border:rgba(255,255,255,.18)}
+body{min-height:100vh;color:var(--text);overflow-x:hidden;background:linear-gradient(135deg,#040c1c,#0f1737 60%,#0a3a4a)}
+button{font:inherit;-webkit-tap-highlight-color:transparent}
+.welcome-screen{position:fixed;inset:0;z-index:2000;background:rgba(7,17,31,.96);backdrop-filter:blur(20px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s;text-align:center;padding:20px}
+.welcome-screen.hidden{opacity:0;pointer-events:none}
+.start-logo-btn{background:transparent;border:2px solid var(--secondary);border-radius:25px;padding:20px 40px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 0 30px rgba(112,234,255,.3);transition:.3s;color:var(--secondary)}
+.start-logo-btn:hover{background:rgba(0,198,255,.15);transform:scale(1.05);box-shadow:0 0 50px rgba(0,198,255,.6)}
+.start-logo-btn b{font-size:4rem}.start-logo-btn span{font-size:1.2rem;font-weight:bold}
+header{position:sticky;top:20px;z-index:100;width:92%;max-width:1250px;margin:20px auto 0;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px;border:1px solid var(--border);border-radius:18px;background:rgba(255,255,255,.1);backdrop-filter:blur(15px)}
+.logo{color:var(--secondary);font-size:1.25rem;font-weight:bold;white-space:nowrap;text-shadow:0 0 15px rgba(112,234,255,.5)}
+.hud{display:flex;gap:18px;font-size:.95rem;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.hud span b{color:var(--secondary)}
+.snd{padding:6px 12px;font-size:1.1rem;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;transition:.3s}
+.snd:hover{border-color:var(--secondary);background:rgba(0,198,255,.25)}
+.snd.off{opacity:.45}
+.page{width:92%;max-width:1300px;margin:40px auto;padding:35px;border:1px solid var(--border);border-radius:25px;background:rgba(255,255,255,.07);backdrop-filter:blur(14px)}
+.page-title{background:linear-gradient(90deg,#fff,#66e8ff,var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-size:2rem;margin-bottom:10px}
+.page-description{color:#d9e8f5;margin-bottom:25px}
+.game-workspace{display:grid;grid-template-columns:310px minmax(0,1fr);gap:25px}
+.parts-sidebar{padding:16px;display:flex;flex-direction:column;gap:10px;max-height:640px;overflow-y:auto;border:1px solid var(--border);border-radius:18px;background:rgba(0,0,0,.45)}
+.sidebar-title{color:var(--secondary);font-weight:bold;margin-bottom:4px}
+.game-btn-part{width:100%;padding:11px 14px;display:flex;justify-content:space-between;color:#fff;text-align:right;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.08);cursor:pointer;transition:.3s}
+.game-btn-part:hover:not(:disabled){border-color:var(--secondary);background:rgba(0,198,255,.25)}
+.game-btn-part:disabled{opacity:.35;cursor:not-allowed}
+.game-btn-part.current{border-color:var(--secondary);background:rgba(0,198,255,.22)}
+.stat-box{padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.06);font-size:.9rem;line-height:1.9}
+.stat-box b{color:var(--secondary)}
+.canvas-wrapper{position:relative;padding:20px;border:2px solid var(--secondary);border-radius:20px;background:radial-gradient(circle at center,#0d233a 0%,#030a14 100%);display:flex;flex-direction:column;align-items:center;gap:14px;min-height:600px}
+.canvas-overlay-msg{align-self:flex-start;padding:10px 18px;color:var(--secondary);border:1px solid var(--secondary);border-radius:12px;background:rgba(7,17,31,.92)}
+.timebar{width:100%;max-width:720px;height:10px;border-radius:8px;background:rgba(255,255,255,.1);overflow:hidden}
+.timebar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#00c6ff,#9e8cff);transition:width 1s linear}
+.timebar.low i{background:#ffb84d}
+#board{position:relative;width:100%;max-width:720px;aspect-ratio:4/3;border:1px solid var(--border);border-radius:10px;background:rgba(0,0,0,.4);overflow:hidden;direction:ltr}
+.piece{position:absolute;cursor:pointer;background-repeat:no-repeat;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);transition:left .3s,top .3s,box-shadow .3s,transform .2s}
+.piece:hover{z-index:2;box-shadow:inset 0 0 0 2px var(--secondary)}
+.piece.sel{z-index:3;transform:scale(1.06);box-shadow:0 0 0 3px var(--secondary),0 0 25px var(--primary)}
+.piece.ok{cursor:default;box-shadow:inset 0 0 0 1px rgba(50,215,75,.7)}
+#board.solved .piece{box-shadow:none}
+#board.solved{border-color:#32d74b;box-shadow:0 0 35px rgba(50,215,75,.5)}
+#ghost{position:absolute;inset:0;background-size:100% 100%;opacity:0;pointer-events:none;transition:opacity .3s;z-index:10}
+#ghost.on{opacity:.8}
+#ref{width:110px;aspect-ratio:4/3;border:1px solid var(--secondary);border-radius:8px;background-size:100% 100%;position:absolute;top:18px;left:18px;display:none}
+.namebox{display:none;width:100%;max-width:720px;text-align:center}
+.namebox.show{display:block}
+.namebox p{color:var(--muted);margin-bottom:10px}
+.namebox .row{display:flex;gap:10px}
+.namebox input{flex:1;padding:12px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,.05);color:#fff;font-size:1.05rem}
+.choices{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.choices .btn{min-width:150px;padding:12px 18px;font-size:1.05rem}
+.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.game-message{display:none;margin-top:6px;padding:12px;width:100%;max-width:720px;text-align:center;border:1px solid #32d74b;border-radius:14px;color:#caffca;background:rgba(19,185,19,.13)}
+.game-message.visible{display:block}.game-message.bad{border-color:#ffb84d;color:#ffe6c0;background:rgba(255,184,77,.13)}
+.btn{padding:10px 20px;color:#fff;border:0;border-radius:8px;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#00c6ff,#0072ff)}
+.btn:disabled{opacity:.4;cursor:not-allowed}.btn.ghostbtn{background:rgba(255,255,255,.1);border:1px solid var(--border)}
+.controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.pc-modal{display:none;position:fixed;inset:0;z-index:1000;background:rgba(4,12,28,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center}
+.pc-modal.active{display:flex}
+.pc-window{width:90%;max-width:480px;background:#0d1b2a;border:2px solid var(--primary);border-radius:16px;padding:30px;text-align:center;box-shadow:0 0 40px rgba(0,198,255,.4)}
+.pc-window h3{color:var(--secondary);margin-bottom:12px;font-size:1.5rem}
+.pc-window p{color:var(--muted);margin-bottom:16px;line-height:1.8}
+.big-stars{font-size:2.6rem;margin:10px 0;letter-spacing:6px}
+footer{text-align:center;color:var(--muted);padding:20px;font-size:.9rem}
+@media(max-width:900px){.game-workspace{grid-template-columns:minmax(0,1fr)}.parts-sidebar{max-height:300px}.canvas-wrapper{min-height:0}}
+@media(max-width:600px){header{top:8px;width:96%;padding:12px}.logo{font-size:.9rem}.hud{font-size:.78rem;gap:8px}.page{width:96%;margin:20px auto;padding:20px 14px}.page-title{font-size:1.5rem}#ref{width:70px}.choices .btn{min-width:120px}}
+
+/* HardHub branded cinematic hardware atmosphere */
+body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 15% 20%,rgba(0,198,255,.18),transparent 34%),radial-gradient(ellipse at 88% 70%,rgba(158,140,255,.13),transparent 35%),linear-gradient(135deg,#050b15,#0b1830 55%,#071d29);background-size:150% 150%;animation:ambientShift 18s ease-in-out infinite alternate}
+body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.13;background-image:linear-gradient(rgba(112,234,255,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(112,234,255,.16) 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(to bottom,black,transparent)}
+.hardhub-atmosphere{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:-1;perspective:1000px}
+.hardhub-chip{position:absolute;width:96px;height:96px;border:1px solid rgba(112,234,255,.35);border-radius:18px;background:linear-gradient(145deg,rgba(31,78,105,.48),rgba(6,15,30,.25));box-shadow:inset 0 0 25px #00c6ff18,0 20px 60px #0005;display:grid;place-items:center;color:#70eaff;font-size:34px;animation:chipFloat 16s ease-in-out infinite}
+.hardhub-chip:before{content:"";position:absolute;inset:8px;border:1px dashed #70eaff45;border-radius:12px}
+.hardhub-chip:nth-child(1){left:5%;top:22%}.hardhub-chip:nth-child(2){right:6%;top:16%;animation-delay:-6s;width:120px;height:120px}.hardhub-chip:nth-child(3){left:14%;bottom:8%;animation-delay:-10s;width:68px;height:68px}.hardhub-chip:nth-child(4){right:18%;bottom:10%;animation-delay:-3s}
+@keyframes chipFloat{0%,100%{transform:translate3d(0,0,-30px) rotateX(15deg) rotateY(-18deg) rotateZ(-8deg)}50%{transform:translate3d(14px,-25px,30px) rotateX(-12deg) rotateY(18deg) rotateZ(8deg)}}
+header,.game-container,.container,.welcome-screen{backdrop-filter:blur(14px)}
+.btn,.ghostbtn,.controls button{border-radius:13px!important;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.btn:hover,.ghostbtn:hover,.controls button:hover{transform:translateY(-2px);box-shadow:0 10px 28px #00c6ff28;filter:brightness(1.08)}
+.piece{transition:box-shadow .18s ease,filter .18s ease;overflow:hidden}
+.piece.ok{box-shadow:inset 0 0 0 2px #6ee7b7,0 0 15px #6ee7b733}
+@keyframes ambientShift{from{background-position:0% 0%}to{background-position:100% 100%}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
+/* Realistic, logo-colored hardware props and branded controls. */
+body{isolation:isolate}
+.hardhub-chip.hardware-cpu{width:82px;height:82px;border:5px solid #a7b3b0;border-radius:18px;background:linear-gradient(145deg,#d9ded7,#818b89 45%,#303a3b 46%,#151e21);box-shadow:inset 0 0 0 5px #323d3c,inset 0 1px 7px #fff8,0 20px 36px #0009;color:#17211c}
+.hardhub-chip.hardware-cpu span{width:44px;height:44px;border:2px solid #aeb8af;border-radius:5px;background:linear-gradient(145deg,#78857b,#303b35);box-shadow:inset 0 0 0 3px #26302a,0 0 14px #b5ff7040;font-size:9px}
+.hardhub-chip.hardware-ram{width:145px;height:30px;border:1px solid #7ee59b;border-radius:5px;background:linear-gradient(180deg,#1c5f3b 0 72%,#c69b42 73% 84%,#204b34 85%);box-shadow:inset 0 1px 5px #fff4,0 18px 28px #0008}
+.hardhub-chip.hardware-ram span{width:82%;height:15px;border-radius:2px;background:repeating-linear-gradient(90deg,#171e23 0 13px,#66736a 13px 15px);color:#ceffd5;font-size:8px}
+.hardhub-chip.hardware-gpu{width:156px;height:66px;border:2px solid #414b52;border-radius:13px;background:radial-gradient(circle at 31% 50%,#171e22 0 10px,#64716b 11px 13px,#27312e 14px 22px,transparent 23px),radial-gradient(circle at 69% 50%,#171e22 0 10px,#64716b 11px 13px,#27312e 14px 22px,transparent 23px),linear-gradient(145deg,#4c5954,#171e22 62%,#354139);box-shadow:inset 0 2px 5px #fff4,0 18px 34px #0009;color:#b5ff70}
+.hardhub-chip.hardware-gpu:before{content:"";position:absolute;inset:auto auto -9px 30%;width:44px;height:8px;border:0;border-radius:0 0 3px 3px;background:repeating-linear-gradient(90deg,#d1ad54 0 4px,#7e6334 4px 6px);transform:translateZ(4px)}
+.hardhub-chip.hardware-gpu span{font-size:9px;text-shadow:0 0 8px #b5ff70}
+.hardhub-chip.hardware-board{width:100px;height:120px;border:2px solid #52765d;border-radius:9px;background:linear-gradient(90deg,transparent 49%,#87b36b66 50%,transparent 52%),linear-gradient(0deg,transparent 49%,#87b36b55 50%,transparent 52%),linear-gradient(145deg,#25523b,#142a24);box-shadow:inset 0 0 0 5px #192f25,0 18px 38px #0009}
+.hardhub-chip.hardware-board:before{inset:22px auto auto 22px;width:42px;height:42px;border:5px solid #84918b;border-radius:7px;background:linear-gradient(145deg,#7b8882,#26322c);box-shadow:0 0 0 3px #293e30,0 0 12px #b5ff7033;transform:translateZ(9px)}
+.hardhub-chip.hardware-board span{align-self:end;margin-bottom:15px;color:#b5ff70;font-size:8px}
+.hardhub-chip:nth-child(1){width:82px;height:82px;left:5%;top:22%}
+.hardhub-chip:nth-child(2){width:145px;height:30px;right:6%;top:16%;animation-delay:-6s}
+.hardhub-chip:nth-child(3){width:156px;height:66px;left:14%;bottom:8%;animation-delay:-10s}
+.hardhub-chip:nth-child(4){width:100px;height:120px;right:18%;bottom:10%;animation-delay:-3s}
+.hardhub-chip{border-color:rgba(181,255,112,.35);background:linear-gradient(145deg,rgba(40,69,58,.88),rgba(10,20,26,.95));box-shadow:inset 0 1px 2px #fff4,inset 0 -8px 16px #0008,0 20px 50px #0008;color:#d8ffc5}
+.hardhub-chip:before{border:0}
+.hardhub-chip.hardware-cpu:before,.hardhub-chip.hardware-board:before{border:5px solid #aeb8af}
+.hardhub-chip.hardware-cpu:before{content:none}
+.hardhub-chip:after{content:"";position:absolute;inset:-5px;border:1px solid rgba(181,255,112,.18);border-radius:inherit;transform:translateZ(-16px);box-shadow:0 12px 24px #0007}
+body,button,a,.piece:not(.ok),.game-btn-part{cursor:url("assets/hardhub-cursor.svg") 14 2,auto}
+input,textarea{cursor:text}
+.page,.canvas-wrapper,.parts-sidebar{box-shadow:0 20px 60px #0004}
+.btn{border:1px solid rgba(181,255,112,.22);border-radius:12px;background:linear-gradient(145deg,#273434,#1b232a);box-shadow:0 5px 14px #0003;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.btn:hover:not(:disabled){transform:translateY(-2px);border-color:#b5ff70;box-shadow:0 9px 24px #87d55c24}
+.btn:active:not(:disabled){transform:translateY(0) scale(.98)}
+.btn:focus-visible,.snd:focus-visible,input:focus-visible{outline:2px solid #b5ff70;outline-offset:3px}
+.btn:not(.ghostbtn){background:linear-gradient(120deg,#50c878,#8fcf62);color:#101b16}
+.btn.ghostbtn{background:linear-gradient(145deg,rgba(39,52,52,.98),rgba(27,35,42,.98));border:1px solid rgba(181,255,112,.22)}
+.site-background-video{position:fixed;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;pointer-events:none;opacity:.72}
+body:before{background:radial-gradient(ellipse at 15% 20%,rgba(0,198,255,.12),transparent 34%),radial-gradient(ellipse at 88% 70%,rgba(158,140,255,.09),transparent 35%),linear-gradient(135deg,rgba(5,11,21,.54),rgba(11,24,48,.42) 55%,rgba(7,29,41,.55))}
+@media(max-width:600px){.hardhub-atmosphere{opacity:.25}.hardhub-chip:nth-child(2),.hardhub-chip:nth-child(4){display:none}}
+@media(prefers-reduced-motion:reduce){.site-background-video{display:none}.hardhub-chip,.btn{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body><video class="site-background-video" autoplay muted loop playsinline aria-hidden="true" tabindex="-1"><source src="assets/green-plasma-background.mp4" type="video/mp4"></video><div class="hardhub-atmosphere" aria-hidden="true"><div class="hardhub-chip hardware-cpu"><span>CPU</span></div><div class="hardhub-chip hardware-ram"><span>DDR5</span></div><div class="hardhub-chip hardware-gpu"><span>RTX</span></div><div class="hardhub-chip hardware-board"><span>HH</span></div></div>
+
+<div class="welcome-screen" id="welcome">
+  <button class="start-logo-btn" id="startBtn"><b>🧩</b><span>HardHub – ابدأ تحدي تركيب العتاد</span></button>
+  <p style="color:var(--muted)">ركّب الصورة ثم اختر اسم القطعة </p>
+</div>
+
+<header>
+  <div class="logo">HardHub - PUZZLE CHALLENGE</div>
+  <div class="hud">
+    <span>⭐ النقاط: <b id="hScore">0</b></span>
+    <span>❤️ المحاولات: <b id="hLives">10</b></span>
+    <span>⏱️ <b id="hTime">0</b>ث</span>
+    <button class="snd" id="sfxBtn" title="المؤثرات الصوتية">🔊</button>
+    <button class="snd" id="musicBtn" title="الموسيقى">🎵</button>
+  </div>
+</header>
+
+<main>
+<section class="page">
+  <h2 class="page-title">🧩 Hardware Puzzle Challenge – تحدي تركيب العتاد</h2>
+  <p class="page-description">انقر على قطعتين لتبديل مكانيهما (أو اسحب وأفلت). ركّب الصورة كاملة ثم اختر اسم قطعة العتاد لتنتقل للمستوى التالي. الصورة الصغيرة بالزاوية تساعدك!</p>
+
+  <div class="game-workspace">
+    <div class="parts-sidebar">
+      <div class="sidebar-title">📊 حالة اللاعب</div>
+      <div class="stat-box">المستوى: <b id="sLvl">1</b> · القطع: <b id="sPieces">4</b><br>الحركات: <b id="sMoves">0</b> · التلميحات: <b id="sHints">0</b></div>
+      <div class="sidebar-title" style="margin-top:8px">🎯 المستويات</div>
+      <div id="levelList" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+
+    <div class="canvas-wrapper">
+      <div class="canvas-overlay-msg" id="lvlMsg">المستوى 1</div>
+      <div class="timebar" id="timebar"><i id="timefill"></i></div>
+      <div id="board"><div id="ghost"></div></div>
+      <div id="ref"></div>
+      <div class="namebox" id="namebox">
+        <p>🎉 تم تركيب الصورة! ما اسم قطعة العتاد الظاهرة؟ <span id="nameClue"></span></p>
+        <div class="choices" id="choices"></div>
+        <div class="row"><input id="nameInput" autocomplete="off" placeholder="أو اكتب الاسم بالعربية أو الإنجليزية" /><button class="btn" id="nameBtn">✔️ تأكيد</button></div>
+      </div>
+      <div class="game-message" id="msg"></div>
+      <div class="controls">
+        <button class="btn" id="hintBtn">👁️ أرني الصورة</button>
+        <button class="btn" id="fixBtn" style="background:linear-gradient(135deg,#32d74b,#28a745)">🧩 ركّب قطعة لي</button>
+        <button class="btn ghostbtn" id="resetBtn">🔄 إعادة المستوى</button>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<div class="pc-modal" id="modal"><div class="pc-window" id="modalBox"></div></div>
+<footer>جميع الحقوق محفوظة © HardHub - تحدي تركيب العتاد</footer>
+
+<script>
+/* ============ الإعدادات (عدّل هنا لإضافة مستويات أو قطع) ============ */
+// ضع صورك الحقيقية في مجلد images/ باسم id.jpg (نسبة 4:3). إن لم توجد الصورة تُستخدم رسمة بديلة تلقائيا.
+const IMG_DIR = 'images/';
+// نسخة سهلة: قطع قليلة، وقت طويل، تلميحات كثيرة
+const LEVELS = [ // c أعمدة، r صفوف، time ثواني، hints عدد التلميحات
+  {c:2,r:2,time:180,hints:10},{c:2,r:2,time:180,hints:10},{c:3,r:2,time:180,hints:10},
+  {c:3,r:2,time:180,hints:10},{c:3,r:3,time:200,hints:10},{c:3,r:3,time:200,hints:10},
+  {c:4,r:3,time:220,hints:10},{c:4,r:3,time:220,hints:10},{c:4,r:3,time:240,hints:10}
+];
+const LIVES = 10;
+
+const fan=(x,y,r,c)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#0a0c10"/>`+[0,1,2,3,4,5,6].map(k=>`<ellipse cx="${x}" cy="${y-r*.5}" rx="${r*.22}" ry="${r*.5}" fill="${c}" opacity=".85" transform="rotate(${k*360/7} ${x} ${y})"/>`).join('')+`<circle cx="${x}" cy="${y}" r="${r*.2}" fill="#222"/>`;
+const rep=(n,f)=>Array.from({length:n},(_,i)=>f(i)).join('');
+const COMPS=[
+ {id:'cpu',ar:'المعالج',en:'CPU',al:['معالج','المعالج','cpu','processor','المعالج المركزي','وحدة المعالجة المركزية'],hint:'دماغ الحاسوب الذي ينفّذ التعليمات',
+  svg:()=>`<rect x="235" y="145" width="330" height="310" rx="16" fill="#2e6b4f"/>`+rep(14,i=>`<rect x="${255+i*20}" y="156" width="10" height="16" fill="#e6b94d"/><rect x="${255+i*20}" y="428" width="10" height="16" fill="#e6b94d"/>`)+rep(10,i=>`<rect x="246" y="${190+i*24}" width="16" height="10" fill="#e6b94d"/><rect x="538" y="${190+i*24}" width="16" height="10" fill="#e6b94d"/>`)+`<rect x="285" y="195" width="230" height="210" rx="14" fill="#c9d0d9" stroke="#8b95a3" stroke-width="4"/><text x="400" y="290" fill="#333" font-size="46" font-weight="bold" text-anchor="middle">CORE</text><text x="400" y="345" fill="#555" font-size="34" text-anchor="middle">i9 · 3.8GHz</text>`},
+ {id:'ram',ar:'الرام',en:'RAM',al:['رام','الرام','ram','memory','الذاكره العشوائيه','ذاكره الوصول العشوائي'],hint:'ذاكرة مؤقتة سريعة تفقد بياناتها عند الإطفاء',
+  svg:()=>`<rect x="60" y="200" width="680" height="190" rx="8" fill="#1f7a4a"/>`+rep(8,i=>`<rect x="${105+i*76}" y="225" width="58" height="110" rx="4" fill="#15171c"/>`)+rep(28,i=>`<rect x="${72+i*23+(i>13?14:0)}" y="395" width="12" height="28" fill="#e6b94d"/>`)+`<rect x="60" y="340" width="680" height="36" fill="#0e4d2e"/><text x="400" y="368" fill="#cde" font-size="26" text-anchor="middle">DDR5 16GB 5600MHz</text>`},
+ {id:'motherboard',ar:'اللوحة الأم',en:'Motherboard',al:['اللوحه الام','لوحه ام','motherboard','mainboard','mobo','اللوحة الام'],hint:'اللوحة التي تربط كل مكونات الحاسوب ببعضها',
+  svg:()=>`<rect x="140" y="50" width="520" height="500" rx="10" fill="#1a3b2e" stroke="#2e7d5b" stroke-width="4"/><rect x="140" y="90" width="80" height="170" fill="#8b95a3"/><rect x="270" y="150" width="120" height="120" rx="6" fill="#c9d0d9" stroke="#e6b94d" stroke-width="6"/>`+rep(4,i=>`<rect x="${440+i*30}" y="90" width="20" height="210" fill="#222"/>`)+`<rect x="190" y="360" width="400" height="22" fill="#222"/><rect x="190" y="420" width="400" height="22" fill="#222"/><rect x="460" y="470" width="70" height="55" fill="#3bb78f"/><rect x="250" y="300" width="100" height="22" fill="#444"/>`+rep(6,i=>`<rect x="${255+i*22}" y="190" width="10" height="10" fill="#e6b94d"/>`)},
+ {id:'gpu',ar:'كرت الشاشة',en:'GPU',al:['كرت الشاشه','كرت الرسوميات','بطاقه الرسوميات','بطاقه الرسومات','كرت الرسومات','gpu','graphics card','video card','graphic card'],hint:'مسؤول عن معالجة الصورة والألعاب',
+  svg:()=>`<rect x="60" y="170" width="690" height="250" rx="22" fill="#1a1d24" stroke="#00c6ff" stroke-width="3"/>`+fan(250,295,95,'#00c6ff')+fan(530,295,95,'#00c6ff')+`<rect x="30" y="190" width="30" height="210" fill="#aab4c0"/><rect x="150" y="420" width="320" height="26" fill="#e6b94d"/><text x="660" y="300" fill="#00c6ff" font-size="30" font-weight="bold" text-anchor="middle" transform="rotate(90 660 300)">RTX</text>`},
+ {id:'ssd',ar:'وحدة التخزين SSD',en:'SSD',al:['ssd','قرص الحاله الصلبه','وحده التخزين','وحده تخزين ssd','وحده التخزين ssd','solid state drive'],hint:'تخزين سريع بلا أجزاء متحركة',
+  svg:()=>`<rect x="120" y="160" width="560" height="280" rx="18" fill="#25282f" stroke="#555" stroke-width="3"/><rect x="170" y="210" width="440" height="180" rx="10" fill="#0b6bff"/><text x="390" y="325" fill="#fff" font-size="100" font-weight="bold" text-anchor="middle">SSD</text><rect x="680" y="250" width="40" height="100" fill="#e6b94d"/>`+rep(4,i=>`<circle cx="${140+(i%2)*520}" cy="${180+Math.floor(i/2)*240}" r="8" fill="#888"/>`)},
+ {id:'hdd',ar:'القرص الصلب',en:'HDD',al:['hdd','القرص الصلب','هارد','الهارد','هارد ديسك','hard drive','harddisk','hard disk'],hint:'تخزين ميكانيكي بأقراص دوّارة',
+  svg:()=>`<rect x="110" y="100" width="580" height="400" rx="14" fill="#b9c2cc" stroke="#7a8592" stroke-width="4"/><circle cx="350" cy="300" r="150" fill="#8a95a3" stroke="#555" stroke-width="4"/><circle cx="350" cy="300" r="50" fill="#444"/><circle cx="350" cy="300" r="14" fill="#ccc"/><line x1="610" y1="140" x2="400" y2="270" stroke="#333" stroke-width="16" stroke-linecap="round"/><circle cx="610" cy="140" r="22" fill="#555"/>`},
+ {id:'psu',ar:'مزود الطاقة',en:'PSU',al:['مزود الطاقه','psu','power supply','باور','الباور','مزود الطاقة'],hint:'يحوّل كهرباء الحائط إلى جهد مناسب للمكونات',
+  svg:()=>`<rect x="110" y="170" width="520" height="280" rx="12" fill="#2b2f38" stroke="#666" stroke-width="3"/>`+fan(280,310,105,'#7cff6b')+`<rect x="440" y="230" width="170" height="90" rx="6" fill="#ddd"/><text x="525" y="288" fill="#222" font-size="38" font-weight="bold" text-anchor="middle">750W</text><rect x="450" y="360" width="60" height="50" rx="6" fill="#111"/>`+['#e33','#fc3','#3c6','#38f','#000'].map((c,i)=>`<path d="M630 ${240+i*22} C700 ${240+i*22},700 ${200+i*50},780 ${200+i*50}" stroke="${c}" stroke-width="10" fill="none"/>`).join('')},
+ {id:'fan',ar:'المروحة',en:'Fan',al:['مروحه','المروحه','مروحه التبريد','fan','cooling fan','case fan','cooler','نظام التبريد','المراوح'],hint:'تحرّك الهواء لتبريد المكونات',
+  svg:()=>`<rect x="150" y="100" width="500" height="400" rx="40" fill="#20242c" stroke="#444" stroke-width="4"/>`+fan(400,300,170,'#00c6ff')+rep(4,i=>`<circle cx="${185+(i%2)*430}" cy="${135+Math.floor(i/2)*330}" r="12" fill="#777"/>`)},
+ {id:'case',ar:'صندوق الحاسوب',en:'Case',al:['صندوق الحاسوب','الكيس','كيس','كيس الحاسوب','case','computer case','pc case','tower','هيكل الحاسوب','صندوق الكمبيوتر'],hint:'الهيكل الذي يحتضن جميع قطع الحاسوب',
+  svg:()=>`<rect x="220" y="40" width="360" height="520" rx="16" fill="#14181f" stroke="#00c6ff" stroke-width="4"/><rect x="245" y="70" width="310" height="340" rx="8" fill="#0b2740"/><rect x="270" y="100" width="150" height="150" fill="#1a3b2e"/>`+fan(480,150,45,'#9e8cff')+fan(480,260,45,'#9e8cff')+`<rect x="270" y="280" width="200" height="40" fill="#333"/><rect x="245" y="430" width="310" height="100" rx="8" fill="#0e1218"/>`+fan(330,480,38,'#00c6ff')+fan(470,480,38,'#00c6ff')+`<circle cx="400" cy="52" r="8" fill="#00c6ff"/>`}
+];
+
+/* ============ الصوت (يُولَّد بالكود - لا يحتاج ملفات) ============ */
+let AC=null;
+const snd={sfx:true,music:true};
+try{Object.assign(snd,JSON.parse(localStorage.getItem('hhSound')||'{}'))}catch(e){}
+const saveSnd=()=>{try{localStorage.setItem('hhSound',JSON.stringify(snd))}catch(e){}};
+function ac(){
+  if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+  if(AC&&AC.state==='suspended')AC.resume();
+  return AC;
+}
+function tone(f,t0,d,type,v){
+  const a=ac();if(!a)return;
+  const o=a.createOscillator(),g=a.createGain(),s=a.currentTime+t0;
+  o.type=type||'sine';o.frequency.value=f;
+  g.gain.setValueAtTime(0.0001,s);g.gain.linearRampToValueAtTime(v||.15,s+.012);g.gain.exponentialRampToValueAtTime(.0001,s+d);
+  o.connect(g);g.connect(a.destination);o.start(s);o.stop(s+d+.05);
+}
+const play=(notes,type,v)=>{if(!snd.sfx)return;notes.forEach(n=>tone(n[0],n[1],n[2],type,v))};
+const SFX={
+  click:()=>play([[520,0,.08]],'triangle',.14),
+  swap:()=>play([[420,0,.08],[620,.07,.1]],'triangle',.16),
+  place:()=>play([[660,0,.12],[880,.09,.18]],'sine',.2),
+  hint:()=>play([[880,0,.15],[1175,.1,.2]],'sine',.13),
+  wrong:()=>play([[220,0,.2],[165,.14,.3]],'triangle',.16),
+  solved:()=>play([[523,0,.18],[659,.12,.18],[784,.24,.28]],'sine',.2),
+  win:()=>play([[523,0,.2],[659,.15,.2],[784,.3,.2],[1047,.45,.45]],'sine',.22),
+  over:()=>play([[400,0,.3],[330,.22,.3],[262,.44,.4]],'triangle',.16),
+  start:()=>play([[523,0,.12],[784,.1,.25]],'sine',.18)
+};
+// موسيقى خلفية هادئة
+const MEL=[523,659,784,659,587,698,880,698,523,659,784,1047,880,784,659,587];
+let mi=0,musicTimer=null;
+function startMusic(){
+  if(musicTimer)return;
+  musicTimer=setInterval(()=>{
+    if(!snd.music||!AC||AC.state!=='running')return;
+    const f=MEL[mi++%MEL.length];
+    tone(f,0,.55,'sine',.035);
+    if(mi%4===1)tone(f/2,0,.9,'triangle',.03);
+  },480);
+}
+function renderSnd(){
+  $('sfxBtn').textContent=snd.sfx?'🔊':'🔇';$('sfxBtn').classList.toggle('off',!snd.sfx);
+  $('musicBtn').classList.toggle('off',!snd.music);
+}
+
+/* ============ أدوات ============ */
+const $=id=>document.getElementById(id);
+const norm=s=>s.toLowerCase().replace(/[\u064B-\u0652ـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/[^a-z0-9\u0621-\u064A]/g,'').replace(/^ال/,'');
+const svgUri=c=>'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><defs><radialGradient id="g" cx="50%" cy="40%"><stop offset="0" stop-color="#17395c"/><stop offset="1" stop-color="#050d1a"/></radialGradient></defs><rect width="800" height="600" fill="url(#g)"/>${c.svg()}</svg>`);
+const imgCache={};
+function getImg(c){return imgCache[c.id]||(imgCache[c.id]=new Promise(res=>{const im=new Image();im.onload=()=>res(IMG_DIR+c.id+'.jpg');im.onerror=()=>res(svgUri(c));im.src=IMG_DIR+c.id+'.jpg'}))}
+let save={unlocked:0,stars:[],best:0};
+try{Object.assign(save,JSON.parse(localStorage.getItem('hhPuzzle')||'{}'))}catch(e){}
+const persist=()=>{try{localStorage.setItem('hhPuzzle',JSON.stringify(save))}catch(e){}};
+
+/* ============ حالة اللعبة ============ */
+let S={lvl:0,score:0,lives:LIVES,order:[],sel:null,phase:'idle',left:0,total:0,moves:0,hints:0,hintsLeft:0,wrong:0,src:'',timer:null};
+
+function renderHud(){$('hScore').textContent=S.score;$('hLives').textContent=Math.max(S.lives,0);$('hTime').textContent=Math.max(S.left,0);$('sMoves').textContent=S.moves;$('sHints').textContent=S.hintsLeft;$('hintBtn').disabled=S.phase==='puzzle'?S.hintsLeft<=0:S.phase!=='name';$('fixBtn').disabled=S.phase!=='puzzle'||S.hintsLeft<=0;$('hintBtn').textContent=S.phase==='name'?'💡 ساعدني بالاسم':'👁️ أرني الصورة'}
+function renderLevels(){
+  $('levelList').innerHTML='';
+  LEVELS.forEach((L,i)=>{const b=document.createElement('button');b.className='game-btn-part'+(i===S.lvl?' current':'');
+    b.innerHTML=`<span>🧩 المستوى ${i+1} (${L.c*L.r} قطعة)</span><span>${'⭐'.repeat(save.stars[i]||0)}</span>`;
+    b.onclick=()=>{SFX.click();S.score=0;S.lives=LIVES;startLevel(i)};$('levelList').appendChild(b)});
+}
+function msg(t,bad){const m=$('msg');m.textContent=t;m.className='game-message visible'+(bad?' bad':'');}
+function hideMsg(){$('msg').className='game-message'}
+
+async function startLevel(i){
+  clearInterval(S.timer);hideMsg();$('modal').classList.remove('active');
+  const L=LEVELS[i],comp=COMPS[i%COMPS.length];
+  S.lvl=i;S.phase='idle';S.sel=null;S.moves=0;S.hints=0;S.wrong=0;S.nameHints=0;S.hintsLeft=L.hints;S.total=S.left=L.time;
+  $('sLvl').textContent=i+1;$('sPieces').textContent=L.c*L.r;$('lvlMsg').textContent=`المستوى ${i+1} من ${LEVELS.length} · ${L.c}×${L.r}`;
+  $('namebox').classList.remove('show');$('nameInput').value='';$('nameClue').textContent='';$('choices').innerHTML='';
+  S.src=await getImg(comp);
+  const board=$('board');board.className='';board.innerHTML='<div id="ghost"></div>';$('ghost').style.backgroundImage=`url("${S.src}")`;
+  const n=L.c*L.r;let o;
+  do{o=[...Array(n).keys()];for(let k=n-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[o[k],o[j]]=[o[j],o[k]]}}while(o.every((v,k)=>v===k)||n>1&&o.filter((v,k)=>v===k).length>n/3);
+  S.order=o;
+  for(let id=0;id<n;id++){
+    const p=document.createElement('div');p.className='piece';p.dataset.id=id;p.draggable=true;
+    const col=id%L.c,row=Math.floor(id/L.c);
+    Object.assign(p.style,{width:100/L.c+'%',height:100/L.r+'%',backgroundImage:`url("${S.src}")`,backgroundSize:`${L.c*100}% ${L.r*100}%`,backgroundPosition:`${L.c>1?col/(L.c-1)*100:0}% ${L.r>1?row/(L.r-1)*100:0}%`});
+    p.onclick=()=>pick(id);
+    p.ondragstart=e=>{e.dataTransfer.setData('text/plain',id)};p.ondragover=e=>e.preventDefault();
+    p.ondrop=e=>{e.preventDefault();const a=+e.dataTransfer.getData('text/plain');if(!isNaN(a))swap(a,id)};
+    board.appendChild(p);
+  }
+  placeAll();
+  // الصورة المرجعية الصغيرة تظهر في كل المستويات (أسهل)
+  const r=$('ref');r.style.display='block';r.style.backgroundImage=`url("${S.src}")`;
+  S.phase='puzzle';renderLevels();renderHud();tick(true);
+  S.timer=setInterval(tick,1000);
+}
+function placeAll(){
+  const L=LEVELS[S.lvl];
+  document.querySelectorAll('.piece').forEach(p=>{const id=+p.dataset.id,slot=S.order.indexOf(id);
+    p.style.left=(slot%L.c)/L.c*100+'%';p.style.top=Math.floor(slot/L.c)/L.r*100+'%';
+    p.classList.toggle('ok',slot===id);p.classList.toggle('sel',S.sel===id)});
+}
+const okCount=()=>S.order.filter((v,k)=>v===k).length;
+function pick(id){
+  if(S.phase!=='puzzle'||S.order.indexOf(id)===id)return;
+  if(S.sel===null){S.sel=id;SFX.click();placeAll()}
+  else if(S.sel===id){S.sel=null;placeAll()}
+  else swap(S.sel,id);
+}
+function swap(a,b){
+  if(S.phase!=='puzzle'||a===b)return;
+  const i=S.order.indexOf(a),j=S.order.indexOf(b);
+  if(S.order[i]===i||S.order[j]===j)return;
+  const before=okCount();
+  [S.order[i],S.order[j]]=[S.order[j],S.order[i]];S.sel=null;S.moves++;placeAll();renderHud();
+  if(S.order.every((v,k)=>v===k))return solved();
+  okCount()>before?SFX.place():SFX.swap();
+}
+function solved(){
+  S.phase='name';$('board').classList.add('solved');$('ref').style.display='none';
+  const c=COMPS[S.lvl%COMPS.length];
+  // أزرار اختيار (الإجابة الصحيحة + خيارين)
+  const others=COMPS.filter(x=>x.id!==c.id).sort(()=>Math.random()-.5).slice(0,2);
+  const opts=[c,...others].sort(()=>Math.random()-.5);
+  const box=$('choices');box.innerHTML='';
+  opts.forEach(o=>{const b=document.createElement('button');b.className='btn ghostbtn';b.textContent=o.ar+' ('+o.en+')';
+    b.onclick=()=>{if(S.phase!=='name')return;if(o.id===c.id)finish(c);else wrongName(b)};box.appendChild(b)});
+  $('namebox').classList.add('show');msg('✅ ممتاز! اختر اسم القطعة الصحيح.');renderHud();SFX.solved();
+}
+function tick(first){
+  if(!first)S.left--;
+  const pct=Math.max(S.left,0)/S.total*100;$('timefill').style.width=pct+'%';$('timebar').classList.toggle('low',pct<20);renderHud();
+  if(S.left<=0){ // بدون عقوبة: نضيف وقت إضافي
+    S.left=60;S.total=Math.max(S.total,60);SFX.hint();
+    msg('⏰ خلص الوقت! أعطيناك دقيقة إضافية، خذ راحتك 😊',true);setTimeout(hideMsg,2500);renderHud();
+  }
+}
+function loseLife(t){
+  S.lives--;renderHud();SFX.wrong();
+  if(S.lives<=0){return gameOver()}
+  msg(t,true);
+}
+function hint(){
+  const c=COMPS[S.lvl%COMPS.length];
+  if(S.phase==='puzzle'){
+    if(S.hintsLeft<=0)return;
+    const g=$('ghost');g.classList.add('on');setTimeout(()=>g.classList.remove('on'),4000);
+    S.hintsLeft--;S.hints++;renderHud();SFX.hint();
+  }else if(S.phase==='name'){ // تلميح الاسم مجاني وغير محدود
+    S.nameHints=(S.nameHints||0)+1;SFX.hint();
+    const en=c.en.slice(0,Math.min(S.nameHints+1,c.en.length))+' …';
+    const ar=c.ar.slice(0,Math.min(S.nameHints+2,c.ar.length))+' …';
+    $('nameClue').innerHTML=`<br><b style="color:var(--secondary)">${c.hint}</b><br>بالعربي: ${ar} · بالإنجليزي: ${en}`;
+  }
+}
+function fixOne(){
+  if(S.phase!=='puzzle'||S.hintsLeft<=0)return;
+  const wrong=S.order.map((v,k)=>v!==k?v:-1).filter(v=>v>=0);if(!wrong.length)return;
+  const id=wrong[Math.floor(Math.random()*wrong.length)],i=S.order.indexOf(id);
+  [S.order[i],S.order[id]]=[S.order[id],S.order[i]];
+  S.sel=null;S.hintsLeft--;S.hints++;S.moves++;placeAll();renderHud();
+  if(S.order.every((v,k)=>v===k))return solved();
+  SFX.place();
+}
+function wrongName(el){
+  S.wrong++;
+  if(el){el.disabled=true;el.style.opacity='.35'}
+  const inp=$('nameInput');inp.classList.remove('shake');void inp.offsetWidth;inp.classList.add('shake');
+  loseLife(`❌ مش هاي الإجابة، جرّب ثاني! المحاولات المتبقية: ${S.lives}`);
+  if(S.wrong>=2&&S.phase==='name')hint(); // بعد غلطتين نعطيه تلميح تلقائي
+}
+function submitName(){
+  if(S.phase!=='name')return;
+  const c=COMPS[S.lvl%COMPS.length],v=norm($('nameInput').value);if(!v)return;
+  if([c.ar,c.en,...c.al].some(a=>norm(a)===v))return finish(c);
+  wrongName(null);
+}
+function finish(c){
+  S.phase='done';clearInterval(S.timer);
+  let stars=1;if(S.left>=S.total*.25)stars++;if(S.wrong<=1)stars++;
+  const L=LEVELS[S.lvl],pts=Math.max(0,L.c*L.r*20+S.left*3+stars*50-S.hints*2);
+  S.score+=pts;save.stars[S.lvl]=Math.max(save.stars[S.lvl]||0,stars);save.best=Math.max(save.best,S.score);persist();
+  renderHud();renderLevels();SFX.win();
+  const last=S.lvl===LEVELS.length-1;
+  showModal(`<h3>${last?'🏆 أنهيت التحدي!':'🎉 أحسنت!'}</h3><p>الإجابة الصحيحة: <b style="color:var(--secondary)">${c.ar} (${c.en})</b></p><div class="big-stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div><p>+${pts} نقطة · المجموع: ${S.score}${last?`<br>أفضل نتيجة: ${save.best}`:''}</p>`,
+    last?`<button class="btn" id="mA">🔁 العب من جديد</button>`:`<button class="btn" id="mA">➡️ المستوى التالي</button>`,
+    ()=>{SFX.click();if(last){S.score=0;S.lives=LIVES;startLevel(0)}else startLevel(S.lvl+1)});
+}
+function gameOver(){
+  clearInterval(S.timer);S.phase='idle';renderHud();SFX.over();
+  showModal(`<h3>💔 انتهت المحاولات</h3><p>وصلت إلى المستوى ${S.lvl+1} بمجموع ${S.score} نقطة.<br>أفضل نتيجة: ${Math.max(save.best,S.score)}</p>`,`<button class="btn" id="mA">🔄 حاول مرة أخرى</button>`,()=>{SFX.click();save.best=Math.max(save.best,S.score);persist();S.score=0;S.lives=LIVES;startLevel(0)});
+}
+function showModal(html,btn,fn){$('modalBox').innerHTML=html+`<div class="controls">${btn}</div>`;$('modal').classList.add('active');$('mA').onclick=fn}
+
+/* ============ الأحداث ============ */
+$('startBtn').onclick=()=>{ac();SFX.start();startMusic();$('welcome').classList.add('hidden');S.score=0;S.lives=LIVES;startLevel(0)};
+$('hintBtn').onclick=hint;$('fixBtn').onclick=fixOne;
+$('resetBtn').onclick=()=>{if(S.phase==='puzzle'||S.phase==='name'){SFX.click();startLevel(S.lvl)}};
+$('nameBtn').onclick=submitName;
+$('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitName()});
+$('sfxBtn').onclick=()=>{snd.sfx=!snd.sfx;saveSnd();renderSnd();if(snd.sfx){ac();SFX.click()}};
+$('musicBtn').onclick=()=>{snd.music=!snd.music;saveSnd();renderSnd();ac();startMusic()};
+renderSnd();renderLevels();renderHud();
+</script>
+</body>
+</html>

@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07101a">
+  <title>Firewall Breakout</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07101a;
+      --panel: #101c2a;
+      --panel-bright: #162438;
+      --line: #263b56;
+      --text: #e8f4ff;
+      --muted: #9bb0c8;
+      --cyan: #38d9ff;
+      --purple: #bc76ff;
+      --green: #60f2aa;
+      --red: #ff5478;
+      --yellow: #ffd56a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 360px;
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px;
+      display: grid;
+      place-items: center;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 50% 0, rgba(56, 217, 255, .12), transparent 42%),
+        radial-gradient(ellipse at 90% 100%, rgba(188, 118, 255, .08), transparent 35%),
+        var(--bg);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    button { font: inherit; }
+
+    .screen {
+      display: none;
+      width: min(1500px, 96vw);
+      min-height: min(900px, calc(100vh - 48px));
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(91, 163, 207, .24);
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgba(12, 23, 36, .98), rgba(7, 15, 25, .99));
+      box-shadow: 0 26px 90px rgba(0, 0, 0, .48), 0 0 50px rgba(56, 217, 255, .05);
+    }
+
+    .screen.active { display: block; }
+
+    #menu-screen.active {
+      display: grid;
+      place-items: center;
+      text-align: center;
+      background:
+        linear-gradient(rgba(56, 217, 255, .035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 217, 255, .035) 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 45%, rgba(25, 59, 77, .5), transparent 62%),
+        #08121e;
+      background-size: 34px 34px, 34px 34px, auto, auto;
+    }
+
+    .menu-card {
+      width: min(780px, 90%);
+      padding: 56px 46px;
+      border: 1px solid rgba(56, 217, 255, .2);
+      border-radius: 26px;
+      background: rgba(10, 21, 33, .92);
+      box-shadow: 0 20px 70px rgba(0, 0, 0, .42), inset 0 1px rgba(255, 255, 255, .04);
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--cyan);
+      font-size: .8rem;
+      font-weight: 800;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(3rem, 7vw, 6rem);
+      letter-spacing: -.055em;
+      line-height: .98;
+      text-shadow: 0 0 34px rgba(56, 217, 255, .18);
+    }
+
+    h1 span { color: var(--cyan); }
+
+    .menu-copy {
+      max-width: 600px;
+      margin: 24px auto 28px;
+      color: var(--muted);
+      font-size: 1.08rem;
+      line-height: 1.75;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .button {
+      min-height: 46px;
+      padding: 11px 19px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      color: var(--text);
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform .16s ease, filter .16s ease, box-shadow .16s ease;
+    }
+
+    .button:hover { transform: translateY(-2px); filter: brightness(1.08); }
+    .button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+
+    .button-primary {
+      color: #04131a;
+      background: linear-gradient(135deg, #61edff, #55e6b0);
+      box-shadow: 0 8px 24px rgba(56, 217, 255, .18);
+    }
+
+    .button-secondary {
+      border-color: var(--line);
+      background: linear-gradient(145deg, #18283d, #111d2c);
+    }
+
+    .button-danger {
+      border-color: rgba(255, 84, 120, .4);
+      background: linear-gradient(145deg, #51263c, #2b1a2b);
+    }
+
+    .how-to {
+      max-width: 620px;
+      margin: 28px auto 0;
+      padding: 16px 20px;
+      border: 1px solid rgba(56, 217, 255, .14);
+      border-radius: 14px;
+      color: var(--muted);
+      background: rgba(4, 12, 20, .62);
+      text-align: left;
+    }
+
+    .how-to strong { color: var(--text); }
+    .how-to p { margin: 7px 0; line-height: 1.55; }
+    .key {
+      display: inline-grid;
+      min-width: 28px;
+      height: 26px;
+      place-items: center;
+      padding: 0 6px;
+      border: 1px solid #405572;
+      border-radius: 6px;
+      color: #f3f8ff;
+      background: #1c2b40;
+      font-size: .78rem;
+      font-weight: 800;
+      box-shadow: 0 2px 0 #101a28;
+    }
+
+    #game-screen { padding: 20px; }
+
+    .game-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .level-name { margin: 0; font-size: 1.15rem; }
+    .level-name span { color: var(--cyan); }
+    .mission-status { color: var(--muted); font-size: .88rem; }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr)) auto;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .meter-card, .inventory, .side-card {
+      border: 1px solid rgba(91, 142, 180, .2);
+      border-radius: 13px;
+      background: linear-gradient(145deg, rgba(20, 34, 51, .94), rgba(12, 23, 36, .96));
+    }
+
+    .meter-card { padding: 10px 13px; }
+
+    .meter-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: .77rem;
+      font-weight: 800;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    .meter-value { color: var(--text); font-variant-numeric: tabular-nums; }
+    .meter-track { height: 8px; overflow: hidden; border-radius: 99px; background: #26364b; }
+    .meter-fill { width: 100%; height: 100%; border-radius: inherit; transition: width .2s ease; }
+    #detection-fill { background: linear-gradient(90deg, var(--green), var(--yellow), var(--red)); }
+    #stability-fill { background: linear-gradient(90deg, var(--red), var(--yellow), var(--green)); }
+    #progress-fill { background: linear-gradient(90deg, var(--purple), var(--cyan)); }
+
+    .inventory {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+    }
+
+    .ability {
+      min-width: 80px;
+      padding: 7px 9px;
+      border: 1px solid rgba(91, 142, 180, .2);
+      border-radius: 9px;
+      color: var(--muted);
+      background: rgba(5, 13, 22, .5);
+      text-align: center;
+      font-size: .72rem;
+      line-height: 1.3;
+    }
+
+    .ability b { display: block; margin-bottom: 2px; color: var(--cyan); font-size: .85rem; }
+    .ability.ready { border-color: rgba(96, 242, 170, .38); color: var(--text); }
+    .ability.cooldown { opacity: .52; }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 260px;
+      align-items: stretch;
+      gap: 14px;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(56, 217, 255, .2);
+      border-radius: 16px;
+      background: #07121e;
+      box-shadow: inset 0 0 40px rgba(56, 217, 255, .04), 0 12px 32px rgba(0, 0, 0, .22);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 960 / 540;
+    }
+
+    .sidebar { display: flex; flex-direction: column; gap: 12px; }
+    .side-card { padding: 14px; }
+    .side-card h2 { margin: 0 0 10px; color: var(--cyan); font-size: .9rem; letter-spacing: .08em; text-transform: uppercase; }
+    .side-card p, .side-card li { color: var(--muted); font-size: .84rem; line-height: 1.5; }
+    .side-card p { margin: 7px 0; }
+    .side-card ul { margin: 0; padding-left: 19px; }
+    .side-card li + li { margin-top: 5px; }
+    .side-card .button { width: 100%; margin-top: 6px; }
+
+    #message-box {
+      min-height: 70px;
+      color: var(--text);
+      border-left: 3px solid var(--purple);
+    }
+
+    .footer-help {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(2, 7, 13, .82);
+      backdrop-filter: blur(9px);
+    }
+
+    .overlay.visible { display: grid; }
+
+    .dialog {
+      width: min(540px, 100%);
+      padding: 25px;
+      border: 1px solid rgba(56, 217, 255, .3);
+      border-radius: 19px;
+      background: linear-gradient(145deg, #142237, #0b1522);
+      box-shadow: 0 25px 90px rgba(0, 0, 0, .55), 0 0 35px rgba(56, 217, 255, .08);
+    }
+
+    .dialog h2 { margin: 0 0 9px; color: var(--cyan); }
+    .dialog p { color: var(--muted); line-height: 1.6; }
+    .puzzle-prompt { padding: 12px; border-radius: 10px; background: rgba(5, 12, 20, .72); }
+    .answer-list { display: grid; gap: 9px; margin: 16px 0; }
+    .answer-button { text-align: left; }
+    #puzzle-feedback { min-height: 24px; color: var(--yellow); font-weight: 700; }
+
+    .result-card { width: min(620px, 100%); margin: 10vh auto 0; text-align: center; }
+    .result-card h2 { margin: 0; color: var(--cyan); font-size: clamp(2rem, 5vw, 3.4rem); }
+    .result-card p { color: var(--muted); line-height: 1.7; }
+
+    #language-button {
+      position: fixed;
+      top: 14px;
+      inset-inline-end: 16px;
+      z-index: 30;
+      min-width: 92px;
+      border: 1px solid rgba(56, 217, 255, .3);
+      border-radius: 999px;
+      color: var(--text);
+      background: #142237;
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    [dir="rtl"] .how-to,
+    [dir="rtl"] .answer-button { text-align: right; }
+    [dir="rtl"] .how-to { direction: rtl; }
+    [dir="rtl"] .side-card ul { padding-left: 0; padding-right: 19px; }
+
+    @media (max-width: 1050px) {
+      body { padding: 14px; }
+      .screen { width: 100%; min-height: calc(100vh - 28px); padding: 20px; }
+      .game-layout { grid-template-columns: minmax(0, 1fr) 230px; }
+      .hud { grid-template-columns: repeat(3, minmax(100px, 1fr)); }
+      .inventory { grid-column: 1 / -1; justify-content: center; }
+    }
+
+    @media (max-width: 760px) {
+      body { min-width: 320px; padding: 8px; }
+      .screen { padding: 14px; border-radius: 16px; }
+      .menu-card { width: 100%; padding: 50px 20px 26px; }
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .inventory { grid-column: 1 / -1; flex-wrap: wrap; }
+      .game-layout { grid-template-columns: minmax(0, 1fr); }
+      .sidebar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .sidebar .side-card:first-child, #message-box { grid-column: 1 / -1; }
+      .game-heading { align-items: flex-start; flex-direction: column; }
+      .footer-help { flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <button id="language-button" type="button" aria-label="Switch language">العربية</button>
+    <section id="menu-screen" class="screen active" aria-labelledby="game-title">
+      <div class="menu-card">
+        <p class="eyebrow" data-i18n="tagline">A stealth puzzle prototype</p>
+        <h1 id="game-title"><span data-i18n="gameName">Firewall Breakout</span></h1>
+        <p class="menu-copy" data-i18n="intro">You are Byte: a tiny program trapped inside a powerful computer. Sneak past security, solve the firewall puzzle, and find a way out.</p>
+        <div class="button-row">
+          <button id="start-button" class="button button-primary" data-i18n="startTutorial">Start Tutorial</button>
+          <button id="sound-button" class="button button-secondary" aria-pressed="false">Sound: Off</button>
+        </div>
+        <div class="how-to">
+          <p><strong data-i18n="move">Move:</strong> <span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> <span data-i18n="orArrows">or arrow keys</span></p>
+          <p><strong data-i18n="interactHide">Interact / hide:</strong> <span class="key">E</span> &nbsp; <strong data-i18n="disableScanner">Disable scanner:</strong> <span class="key">Q</span></p>
+          <p><strong data-i18n="createDecoy">Create a decoy:</strong> <span class="key">C</span> &nbsp; <strong data-i18n="pauseLabel">Pause:</strong> <span class="key">Esc</span></p>
+          <p data-i18n="menuTip">The green files hide you. The scanner's blue sweep raises detection if it spots you.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="game-screen" class="screen" aria-label="Tutorial level">
+      <header class="game-heading">
+        <h1 class="level-name"><span data-i18n="gameName">FIREWALL BREAKOUT</span> <span id="level-title">/ LEVEL 1: PERSONAL COMPUTER</span></h1>
+        <span id="mission-status" class="mission-status">Tutorial · Stage 1 of 5</span>
+      </header>
+
+      <div class="hud">
+        <div class="meter-card">
+          <div class="meter-heading"><span data-i18n="detection">Detection</span><span id="detection-value" class="meter-value">0%</span></div>
+          <div class="meter-track"><div id="detection-fill" class="meter-fill"></div></div>
+        </div>
+        <div class="meter-card">
+          <div class="meter-heading"><span data-i18n="stability">System stability</span><span id="stability-value" class="meter-value">100%</span></div>
+          <div class="meter-track"><div id="stability-fill" class="meter-fill"></div></div>
+        </div>
+        <div class="meter-card">
+          <div class="meter-heading"><span data-i18n="routeUnlocked">Route unlocked</span><span id="progress-value" class="meter-value">0 / 1</span></div>
+          <div class="meter-track"><div id="progress-fill" class="meter-fill"></div></div>
+        </div>
+        <div class="inventory" aria-label="Ability inventory">
+          <div id="disable-ability" class="ability ready"><b>Q</b><span data-i18n="disableScannerShort">Disable scanner</span></div>
+          <div id="clone-ability" class="ability ready"><b>C</b><span data-i18n="signalClone">Signal clone</span></div>
+          <div class="ability"><b>E</b><span data-i18n="hideInteract">Hide / interact</span></div>
+        </div>
+      </div>
+
+      <div class="game-layout">
+        <div class="canvas-wrap">
+          <canvas id="game-canvas" width="960" height="540" aria-label="Digital network map"></canvas>
+        </div>
+        <aside class="sidebar">
+          <section class="side-card">
+            <h2 data-i18n="currentObjective">Current objective</h2>
+            <p id="objective-text">Reach the firewall terminal. Hide in the green file if the scanner gets close.</p>
+            <p><span class="key">E</span> <span data-i18n="interactHint">near a glowing object to use it.</span></p>
+          </section>
+          <section id="message-box" class="side-card" aria-live="polite">Byte is ready. Find a safe route through the network.</section>
+          <section class="side-card">
+            <h2 data-i18n="quickControls">Quick controls</h2>
+            <ul>
+              <li data-i18n="controlMove">Move with WASD or arrow keys.</li>
+              <li data-i18n="controlHide">Hide inside green files.</li>
+              <li data-i18n="controlPuzzle">Solve the terminal puzzle to open the gate.</li>
+              <li data-i18n="controlExit">Reach the exit before detection hits 100%.</li>
+            </ul>
+            <button id="pause-button" class="button button-secondary" data-i18n="pause">Pause</button>
+          </section>
+        </aside>
+      </div>
+      <div class="footer-help">
+        <span data-i18n="tipCoolDown">Tip: Pause movement to let detection cool down.</span>
+        <span data-i18n="checkpointTip">Checkpoint: the purple SAVE node.</span>
+      </div>
+    </section>
+
+    <section id="result-screen" class="screen">
+      <div class="result-card">
+        <p id="result-eyebrow" class="eyebrow" data-i18n="resultEyebrow">Firewall Breakout / Tutorial</p>
+        <h2 id="result-title">Escaped the system</h2>
+        <p id="result-copy"></p>
+        <div class="button-row">
+          <button id="retry-button" class="button button-primary" data-i18n="retry">Try again</button>
+          <button id="menu-button" class="button button-secondary" data-i18n="mainMenu">Main menu</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="puzzle-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="puzzle-title">
+      <section class="dialog">
+        <p class="eyebrow" data-i18n="terminalEyebrow">Firewall terminal / access rule</p>
+        <h2 id="puzzle-title" data-i18n="puzzleTitle">Choose a secure route</h2>
+        <p id="puzzle-prompt" class="puzzle-prompt" data-i18n="puzzlePrompt">The gate accepts encrypted web traffic only. Which standard port is used for HTTPS?</p>
+        <div id="answer-list" class="answer-list">
+          <button class="button button-secondary answer-button" data-answer="22" data-i18n="port22">Port 22 — SSH remote login</button>
+          <button class="button button-secondary answer-button" data-answer="80" data-i18n="port80">Port 80 — HTTP web traffic</button>
+          <button class="button button-primary answer-button" data-answer="443" data-i18n="port443">Port 443 — HTTPS encrypted web traffic</button>
+        </div>
+        <div id="puzzle-feedback" aria-live="polite"></div>
+        <button id="close-puzzle" class="button button-secondary" data-i18n="closeTerminal">Close terminal</button>
+      </section>
+    </div>
+
+    <div id="pause-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+      <section class="dialog">
+        <p class="eyebrow" data-i18n="missionPaused">Mission paused</p>
+        <h2 id="pause-title" data-i18n="pauseTitle">Take a breath, Byte.</h2>
+        <p data-i18n="pauseCopy">Security scanners stop moving while the game is paused.</p>
+        <div class="button-row">
+          <button id="resume-button" class="button button-primary" data-i18n="resume">Resume</button>
+          <button id="quit-button" class="button button-secondary" data-i18n="mainMenu">Main menu</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const canvas = document.getElementById('game-canvas');
+      const ctx = canvas.getContext('2d');
+      const screens = {
+        menu: document.getElementById('menu-screen'),
+        game: document.getElementById('game-screen'),
+        result: document.getElementById('result-screen')
+      };
+      const ui = {
+        detection: document.getElementById('detection-value'),
+        detectionFill: document.getElementById('detection-fill'),
+        stability: document.getElementById('stability-value'),
+        stabilityFill: document.getElementById('stability-fill'),
+        progress: document.getElementById('progress-value'),
+        progressFill: document.getElementById('progress-fill'),
+        objective: document.getElementById('objective-text'),
+        message: document.getElementById('message-box'),
+        puzzle: document.getElementById('puzzle-overlay'),
+        feedback: document.getElementById('puzzle-feedback'),
+        pause: document.getElementById('pause-overlay'),
+        resultTitle: document.getElementById('result-title'),
+        resultCopy: document.getElementById('result-copy'),
+        resultEyebrow: document.getElementById('result-eyebrow'),
+        levelTitle: document.getElementById('level-title'),
+        missionStatus: document.getElementById('mission-status'),
+        puzzlePrompt: document.getElementById('puzzle-prompt'),
+        answerList: document.getElementById('answer-list'),
+        disableAbility: document.getElementById('disable-ability'),
+        cloneAbility: document.getElementById('clone-ability'),
+        languageButton: document.getElementById('language-button'),
+        soundButton: document.getElementById('sound-button'),
+        gameScreen: document.getElementById('game-screen'),
+        gameCanvas: document.getElementById('game-canvas')
+      };
+
+      const translations = {
+        en: {
+          tagline:'A stealth puzzle prototype',
+          gameName:'Firewall Breakout',
+          intro:'You are Byte: a tiny program trapped inside a powerful computer. Escape five increasingly secure systems by sneaking past security and solving each firewall puzzle.',
+          startTutorial:'Start Tutorial',
+          soundOn:'Sound: On',
+          soundOff:'Sound: Off',
+          move:'Move:',
+          orArrows:'or arrow keys',
+          interactHide:'Interact / hide:',
+          disableScanner:'Disable scanner:',
+          createDecoy:'Create a decoy:',
+          pauseLabel:'Pause:',
+          menuTip:"Hide in the green files placed between scanner patrols. The blue scan raises detection if it spots you.",
+          levelName:'/ LEVEL 1: PERSONAL COMPUTER',
+          systemPersonal:'PERSONAL COMPUTER',
+          systemOffice:'OFFICE NETWORK',
+          systemBank:'BANKING SERVER',
+          systemCloud:'CLOUD STORAGE',
+          systemGovernment:'GOVERNMENT DATA CENTER',
+          difficultyTraining:'Training',
+          difficultyEasy:'Easy',
+          difficultyMedium:'Medium',
+          difficultyHard:'Hard',
+          difficultyExpert:'Expert',
+          stageStatus:'Stage {number} of 5 · {difficulty}',
+          detection:'Detection',
+          stability:'System stability',
+          routeUnlocked:'Route unlocked',
+          disableScannerShort:'Disable scanner',
+          signalClone:'Signal clone',
+          hideInteract:'Hide / interact',
+          currentObjective:'Current objective',
+          objectiveStart:'Reach the firewall terminal. Hide in the green file if the scanner gets close.',
+          objectivePuzzle:'Reach firewall terminal {current} of {total}. Hide inside a green file when a scanner gets close.',
+          objectiveExit:'The gate is open. Reach the purple checkpoint, then continue to the exit.',
+          interactHint:'near a glowing object to use it.',
+          readyMessage:'Byte is ready. Find a safe route through the network.',
+          quickControls:'Quick controls',
+          controlMove:'Move with WASD or arrow keys.',
+          controlHide:'Hide inside green files.',
+          controlPuzzle:'Answer each terminal puzzle to open the next gate.',
+          controlExit:'Reach the exit before detection hits 100%.',
+          pause:'Pause',
+          tipCoolDown:'Tip: Stop moving to let detection cool down.',
+          checkpointTip:'Checkpoint: the purple SAVE node.',
+          resultEyebrow:'Firewall Breakout / Tutorial',
+          resultStageEyebrow:'Firewall Breakout / Stage {number}: {system}',
+          retry:'Try again',
+          mainMenu:'Main menu',
+          terminalEyebrow:'System terminal / hardware and software',
+          puzzleTitle:'Answer the system question',
+          puzzlePrompt:'Choose the correct answer about computer hardware or software.',
+          port22:'Port 22 — SSH remote login',
+          port80:'Port 80 — HTTP web traffic',
+          port443:'Port 443 — HTTPS encrypted web traffic',
+          closeTerminal:'Close terminal',
+          missionPaused:'Mission paused',
+          pauseTitle:'Take a breath, Byte.',
+          pauseCopy:'Security scanners stop moving while the game is paused.',
+          resume:'Resume',
+          wonTitle:'Byte escaped!',
+          lostTitle:'Byte was caught',
+          wonCopy:'You opened the firewall route, reached the exit, and escaped the home system. This tutorial prototype is complete.',
+          lostCopy:'Security reached you before you could escape. Try hiding in the green file, disabling the scanner, or using a signal clone.',
+          hideEnter:'Hidden in the file. The scanner cannot detect you here. Press E to leave.',
+          hideLeave:'You left the file. Stay clear of the scanner sweep.',
+          terminalFound:'Firewall terminal found. Solve its port puzzle to open the gate.',
+          terminalFoundProgress:'Firewall terminal {current} of {total}. Solve the puzzle to open the next gate.',
+          puzzleSolvedContinue:'Firewall rule accepted ({current}/{total}). Move to the next terminal.',
+          allRoutesOpen:'All firewall rules bypassed. Reach the exit.',
+          checkpointSaved:'Checkpoint saved. If detected, Byte will restart here.',
+          exitLocked:'The exit is locked. Find the terminal and solve its firewall puzzle first.',
+          nothingNearby:'Nothing to use nearby. Move close to a glowing file, terminal, checkpoint, or exit and press E.',
+          correctFeedback:'Correct! HTTPS uses port 443. The firewall gate is open.',
+          correctStageFeedback:'Correct! The firewall gate is open.',
+          routeOpen:'Firewall rule bypassed. The route is open; head right to the checkpoint.',
+          wrongAnswer:'That answer is not secure. Try again.',
+          rejectedRule:'The firewall rejected that rule. Detection increased.',
+          nextStage:'Next stage',
+          replayCampaign:'Play again',
+          stageWonCopy:'You escaped {system}. Get ready: the next system has stronger security.',
+          campaignWonCopy:'You escaped the government data center and completed all five systems. Byte is free!',
+          stageLostCopy:'Security caught Byte in {system}. Try again, use the file to hide, and save your scanner ability for the dangerous patrols.',
+          scannerDisabled:'Scanner disabled for {seconds} more seconds.',
+          scannerDisabledNow:'Scanner disabled for 5 seconds. Move quickly!',
+          cloneRecharging:'Signal clone recharging: {seconds} seconds.',
+          cloneCreated:'Signal clone created. It distracts the scanner for 6 seconds.',
+          detectedCheckpoint:'Detected! Checkpoint restored. Hide, disable the scanner, or use a clone before moving.',
+          detectedCaught:'Security reached you before you could escape. Try hiding in the green file, disabling the scanner, or using a signal clone.',
+          secondLabel:'{value} seconds',
+          routeProgress:'{current} / {total}',
+          canvasIn:'IN',
+          canvasFile:'FILE',
+          canvasPort:'PORT',
+          canvasSave:'SAVE',
+          canvasExit:'EXIT',
+          canvasSpawn:'SPAWN',
+          canvasHide:'HIDE',
+          canvasPuzzle:'FIREWALL PUZZLE',
+          canvasCheckpoint:'CHECKPOINT',
+          canvasCheckpointSaved:'CHECKPOINT SAVED',
+          canvasMapLabel:'Digital network map',
+          languageLabel:'Switch language to Arabic'
+        },
+        ar: {
+          tagline:'نموذج أولي للعبة تخفٍ وألغاز',
+          gameName:'الهروب من الجدار الناري',
+          intro:'أنت Byte، برنامج صغير عالق داخل حاسوب قوي. اهرب عبر خمسة أنظمة تزداد حمايتها تدريجيًا، وتسلل من أنظمة الأمان وحل لغز الجدار الناري في كل مرحلة.',
+          startTutorial:'ابدأ التعليم',
+          soundOn:'الصوت: يعمل',
+          soundOff:'الصوت: مغلق',
+          move:'الحركة:',
+          orArrows:'أو أسهم لوحة المفاتيح',
+          interactHide:'تفاعل / اختباء:',
+          disableScanner:'عطّل الماسح:',
+          createDecoy:'أنشئ نسخة وهمية:',
+          pauseLabel:'إيقاف مؤقت:',
+          menuTip:'اختبئ داخل الملفات الخضراء الموزعة بين دوريات الماسحات. يرفع المسح الأزرق مستوى اكتشافك إذا رصدك.',
+          levelName:'/ المستوى 1: الحاسوب الشخصي',
+          systemPersonal:'الحاسوب الشخصي',
+          systemOffice:'شبكة المكتب',
+          systemBank:'خادم البنك',
+          systemCloud:'التخزين السحابي',
+          systemGovernment:'مركز بيانات حكومي',
+          difficultyTraining:'تدريبي',
+          difficultyEasy:'سهل',
+          difficultyMedium:'متوسط',
+          difficultyHard:'صعب',
+          difficultyExpert:'خبير',
+          stageStatus:'المرحلة {number} من 5 · {difficulty}',
+          detection:'مستوى الاكتشاف',
+          stability:'استقرار النظام',
+          routeUnlocked:'المسار المفتوح',
+          disableScannerShort:'تعطيل الماسح',
+          signalClone:'نسخة إشارة وهمية',
+          hideInteract:'اختباء / تفاعل',
+          currentObjective:'الهدف الحالي',
+          objectiveStart:'اذهب إلى محطة الجدار الناري. اختبئ داخل الملف الأخضر إذا اقترب الماسح.',
+          objectivePuzzle:'اذهب إلى محطة الجدار الناري {current} من {total}. اختبئ داخل ملف أخضر عندما يقترب الماسح.',
+          objectiveExit:'فُتحت البوابة. اذهب إلى نقطة الحفظ البنفسجية، ثم تابع إلى المخرج.',
+          interactHint:'بالقرب من جسم مضيء لاستخدامه.',
+          readyMessage:'Byte جاهز. ابحث عن طريق آمن عبر الشبكة.',
+          quickControls:'التحكم السريع',
+          controlMove:'تحرك باستخدام WASD أو الأسهم.',
+          controlHide:'اختبئ داخل الملفات الخضراء.',
+          controlPuzzle:'أجب عن ألغاز المحطات لفتح البوابات بالتتابع.',
+          controlExit:'اصل إلى المخرج قبل أن يصل الاكتشاف إلى 100%.',
+          pause:'إيقاف مؤقت',
+          tipCoolDown:'تلميح: توقف عن الحركة لخفض مستوى الاكتشاف.',
+          checkpointTip:'نقطة الحفظ: عقدة SAVE البنفسجية.',
+          resultEyebrow:'الهروب من الجدار الناري / التعليم',
+          resultStageEyebrow:'الهروب من الجدار الناري / المرحلة {number}: {system}',
+          retry:'حاول مجددًا',
+          mainMenu:'القائمة الرئيسية',
+          terminalEyebrow:'محطة النظام / المعدات والبرمجيات',
+          puzzleTitle:'أجب عن سؤال النظام',
+          puzzlePrompt:'اختر الإجابة الصحيحة عن معدات الحاسوب أو برمجياته.',
+          port22:'المنفذ 22 — تسجيل دخول SSH عن بُعد',
+          port80:'المنفذ 80 — حركة ويب HTTP',
+          port443:'المنفذ 443 — حركة ويب HTTPS مشفرة',
+          closeTerminal:'إغلاق المحطة',
+          missionPaused:'المهمة متوقفة مؤقتًا',
+          pauseTitle:'التقط أنفاسك يا Byte.',
+          pauseCopy:'تتوقف ماسحات الأمان عن الحركة أثناء إيقاف اللعبة.',
+          resume:'استئناف',
+          wonTitle:'نجح Byte في الهرب!',
+          lostTitle:'تم الإمساك بـ Byte',
+          wonCopy:'فتحت مسار الجدار الناري ووصلت إلى المخرج وهربت من نظام الحاسوب الشخصي. انتهى النموذج التعليمي.',
+          lostCopy:'وصل نظام الحماية إليك قبل الهرب. حاول الاختباء في الملف الأخضر أو تعطيل الماسح أو استخدام نسخة الإشارة.',
+          hideEnter:'اختبأت داخل الملف. لا يستطيع الماسح اكتشافك هنا. اضغط E للخروج.',
+          hideLeave:'خرجت من الملف. ابتعد عن مجال مسح الحماية.',
+          terminalFound:'عثرت على محطة الجدار الناري. حل لغز المنفذ لفتح البوابة.',
+          terminalFoundProgress:'محطة الجدار الناري {current} من {total}. حل اللغز لفتح البوابة التالية.',
+          puzzleSolvedContinue:'قُبلت قاعدة الجدار الناري ({current}/{total}). انتقل إلى المحطة التالية.',
+          allRoutesOpen:'تم تجاوز جميع قواعد الجدار الناري. اذهب إلى المخرج.',
+          checkpointSaved:'تم حفظ نقطة التقدم. إذا اكتُشفت، فستعود إلى هنا.',
+          exitLocked:'المخرج مغلق. اعثر على المحطة وحل لغز الجدار الناري أولًا.',
+          nothingNearby:'لا يوجد شيء للتفاعل معه. اقترب من ملف أو محطة أو نقطة حفظ أو مخرج مضيء واضغط E.',
+          correctFeedback:'صحيح! يستخدم HTTPS المنفذ 443. فُتحت بوابة الجدار الناري.',
+          correctStageFeedback:'إجابة صحيحة! فُتحت بوابة الجدار الناري.',
+          routeOpen:'تم تجاوز قاعدة الجدار الناري. المسار مفتوح؛ اتجه يمينًا إلى نقطة الحفظ.',
+          wrongAnswer:'هذه الإجابة غير آمنة. حاول مجددًا.',
+          rejectedRule:'رفض الجدار الناري هذه القاعدة. ارتفع مستوى الاكتشاف.',
+          nextStage:'المرحلة التالية',
+          replayCampaign:'العب من جديد',
+          stageWonCopy:'هربت من {system}. استعد، فالنظام التالي يتمتع بحماية أقوى.',
+          campaignWonCopy:'هربت من مركز البيانات الحكومي وأكملت الأنظمة الخمسة. أصبح Byte حرًا!',
+          stageLostCopy:'أمسكت أنظمة الحماية بـ Byte في {system}. حاول مجددًا، واختبئ في الملفات، واحتفظ بقدرة تعطيل الماسح للمناطق الخطرة.',
+          scannerDisabled:'الماسح معطل لمدة {seconds} ثانية أخرى.',
+          scannerDisabledNow:'عطلت الماسح لمدة 5 ثوانٍ. تحرك بسرعة!',
+          cloneRecharging:'إعادة شحن نسخة الإشارة: {seconds} ثانية.',
+          cloneCreated:'أنشأت نسخة إشارة وهمية. ستشغل الماسح لمدة 6 ثوانٍ.',
+          detectedCheckpoint:'تم اكتشافك! أُعيد تحميل نقطة الحفظ. اختبئ أو عطّل الماسح أو استخدم نسخة وهمية قبل التحرك.',
+          detectedCaught:'وصل نظام الحماية إليك قبل الهرب. اختبئ في الملف الأخضر أو عطّل الماسح أو استخدم نسخة الإشارة.',
+          secondLabel:'{value} ثانية',
+          routeProgress:'{current} / {total}',
+          canvasIn:'دخول',
+          canvasFile:'ملف',
+          canvasPort:'منفذ',
+          canvasSave:'حفظ',
+          canvasExit:'خروج',
+          canvasSpawn:'البداية',
+          canvasHide:'اختباء',
+          canvasPuzzle:'لغز الجدار الناري',
+          canvasCheckpoint:'نقطة حفظ',
+          canvasCheckpointSaved:'تم الحفظ',
+          canvasMapLabel:'خريطة الشبكة الرقمية',
+          languageLabel:'التبديل إلى الإنجليزية'
+        }
+      };
+
+      let language = localStorage.getItem('firewall-breakout-language') === 'ar' ? 'ar' : 'en';
+      let currentMessage = 'readyMessage';
+      let currentMessageParams = {};
+
+      function t(key, params = {}) {
+        return translations[language][key].replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? ''));
+      }
+
+      function applyLanguage() {
+        document.documentElement.lang = language;
+        document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+        document.title = t('gameName');
+        document.querySelectorAll('[data-i18n]').forEach(element => {
+          element.textContent = t(element.dataset.i18n);
+        });
+        ui.languageButton.textContent = language === 'ar' ? 'English' : 'العربية';
+        ui.languageButton.setAttribute('aria-label', t('languageLabel'));
+        ui.gameScreen.setAttribute('aria-label', language === 'ar' ? 'المستوى التعليمي' : 'Tutorial level');
+        ui.gameCanvas.setAttribute('aria-label', t('canvasMapLabel'));
+        document.querySelector('.inventory').setAttribute('aria-label', language === 'ar' ? 'مخزون القدرات' : 'Ability inventory');
+        ui.soundButton.textContent = soundEnabled ? t('soundOn') : t('soundOff');
+        ui.objective.textContent = state.puzzleSolved
+          ? t('objectiveExit')
+          : t(state.puzzleIndex === 0 ? 'objectiveStart' : 'objectivePuzzle', {
+            current: state.puzzleIndex + 1,
+            total: levels[state.levelIndex].puzzles.length
+          });
+        message(currentMessage, currentMessageParams);
+        if (state.result) {
+          ui.resultTitle.textContent = t(state.result === 'won' ? 'wonTitle' : 'lostTitle');
+        }
+        if (ui.puzzle.classList.contains('visible') && ui.feedback.dataset.translationKey) {
+          ui.feedback.textContent = t(ui.feedback.dataset.translationKey);
+        }
+        updateHud();
+        renderStageText();
+        draw();
+      }
+
+      const puzzleBank = {
+        pcCpu: {
+          question:{ en:'Which hardware component executes most program instructions?', ar:'أي قطعة مادية تنفذ معظم تعليمات البرامج؟' },
+          options:[['cpu','CPU — processor','المعالج المركزي CPU'],['ram','RAM — temporary memory','ذاكرة RAM المؤقتة'],['ssd','SSD — storage drive','قرص التخزين SSD']],
+          answer:'cpu'
+        },
+        pcRam: {
+          question:{ en:'Which component temporarily holds data while an application is running?', ar:'أي مكوّن يحتفظ بالبيانات مؤقتًا أثناء تشغيل التطبيق؟' },
+          options:[['ram','RAM','ذاكرة RAM'],['psu','Power supply unit','وحدة تزويد الطاقة'],['gpu','Graphics card','بطاقة الرسوميات']],
+          answer:'ram'
+        },
+        officeRouter: {
+          question:{ en:'Which device directs data between the office network and the internet?', ar:'أي جهاز يوجّه البيانات بين شبكة المكتب والإنترنت؟' },
+          options:[['router','Router','الموجّه (Router)'],['monitor','Monitor','الشاشة'],['keyboard','Keyboard','لوحة المفاتيح']],
+          answer:'router'
+        },
+        officeOs: {
+          question:{ en:'Which software manages hardware and lets applications run?', ar:'أي برنامج يدير مكونات الحاسوب ويتيح تشغيل التطبيقات؟' },
+          options:[['os','Operating system','نظام التشغيل'],['spreadsheet','Spreadsheet','برنامج الجداول'],['browser','Web browser','متصفح الويب']],
+          answer:'os'
+        },
+        officePrinter: {
+          question:{ en:'Which device produces a paper copy of a digital document?', ar:'أي جهاز يطبع نسخة ورقية من مستند رقمي؟' },
+          options:[['printer','Printer','الطابعة'],['router','Router','الموجّه'],['webcam','Webcam','كاميرا الويب']],
+          answer:'printer'
+        },
+        bankSsd: {
+          question:{ en:'Which storage device has no moving parts and usually loads server data faster?', ar:'أي وحدة تخزين لا تحتوي على أجزاء متحركة وتحمّل بيانات الخادم عادةً بسرعة أكبر؟' },
+          options:[['ssd','Solid-state drive (SSD)','قرص الحالة الصلبة SSD'],['hdd','Hard disk drive (HDD)','القرص الصلب HDD'],['dvd','Optical disc','قرص ضوئي']],
+          answer:'ssd'
+        },
+        bankEncryption: {
+          question:{ en:'Which software process makes stored account data unreadable without a key?', ar:'أي عملية برمجية تجعل بيانات الحساب المحفوظة غير مقروءة دون مفتاح؟' },
+          options:[['encryption','Encryption','التشفير'],['compression','Compression','ضغط البيانات'],['defrag','Disk defragmentation','إلغاء تجزئة القرص']],
+          answer:'encryption'
+        },
+        bankFirewall: {
+          question:{ en:'Which security software filters network traffic using access rules?', ar:'أي برنامج أمني يرشّح حركة الشبكة باستخدام قواعد الوصول؟' },
+          options:[['firewall','Firewall software','برنامج الجدار الناري'],['calculator','Calculator','الآلة الحاسبة'],['media','Media player','مشغل الوسائط']],
+          answer:'firewall'
+        },
+        bankCooling: {
+          question:{ en:'Which hardware helps prevent a busy server processor from overheating?', ar:'أي قطعة مادية تساعد على منع ارتفاع حرارة معالج الخادم أثناء العمل؟' },
+          options:[['cooler','Heat sink and cooling fan','مشتت حراري ومروحة تبريد'],['soundcard','Sound card','بطاقة الصوت'],['touchpad','Touchpad','لوحة اللمس']],
+          answer:'cooler'
+        },
+        cloudVirtual: {
+          question:{ en:'Which software lets several virtual computers share one physical server?', ar:'أي برنامج يتيح لعدة حواسيب افتراضية مشاركة خادم مادي واحد؟' },
+          options:[['hypervisor','Hypervisor','برنامج إدارة الأجهزة الافتراضية'],['texteditor','Text editor','محرر النصوص'],['driver','Printer driver','برنامج تشغيل الطابعة']],
+          answer:'hypervisor'
+        },
+        cloudRaid: {
+          question:{ en:'Which storage setup keeps data available if one drive fails?', ar:'أي إعداد تخزين يساعد على إبقاء البيانات متاحة عند تعطل أحد الأقراص؟' },
+          options:[['raid','Redundant disk array (RAID)','مصفوفة أقراص متكررة RAID'],['usb','Single USB drive','وحدة USB واحدة'],['cache','Browser cache','ذاكرة المتصفح المؤقتة']],
+          answer:'raid'
+        },
+        cloudLinux: {
+          question:{ en:'Which item is Linux in a cloud server?', ar:'ما تصنيف Linux في خادم سحابي؟' },
+          options:[['os','An operating system','نظام تشغيل'],['cpu','A processor','معالج'],['nic','A network cable','كابل شبكة']],
+          answer:'os'
+        },
+        cloudBackup: {
+          question:{ en:'Which software task creates a separate copy to restore lost files?', ar:'أي مهمة برمجية تنشئ نسخة منفصلة لاستعادة الملفات المفقودة؟' },
+          options:[['backup','Backup','النسخ الاحتياطي'],['overclock','Overclocking','رفع تردد المعالج'],['format','Formatting the only drive','تهيئة القرص الوحيد']],
+          answer:'backup'
+        },
+        govTpm: {
+          question:{ en:'Which hardware chip can securely store device encryption keys?', ar:'أي شريحة مادية تستطيع تخزين مفاتيح تشفير الجهاز بأمان؟' },
+          options:[['tpm','Trusted Platform Module (TPM)','وحدة النظام الأساسي الموثوق TPM'],['gpu','Graphics processor','معالج الرسوميات'],['mic','Microphone','الميكروفون']],
+          answer:'tpm'
+        },
+        govMfa: {
+          question:{ en:'Which software security feature requires a second proof of identity at sign-in?', ar:'أي ميزة أمنية برمجية تطلب إثبات هوية إضافيًا عند تسجيل الدخول؟' },
+          options:[['mfa','Multi-factor authentication','المصادقة متعددة العوامل'],['autofill','Password autofill only','التعبئة التلقائية لكلمة المرور فقط'],['guest','Guest account','حساب ضيف']],
+          answer:'mfa'
+        },
+        govSecureBoot: {
+          question:{ en:'Which firmware feature checks trusted startup software before loading the operating system?', ar:'أي ميزة في البرنامج الثابت تتحقق من موثوقية برامج بدء التشغيل قبل تحميل نظام التشغيل؟' },
+          options:[['secureboot','Secure Boot','الإقلاع الآمن'],['screensaver','Screen saver','شاشة التوقف'],['clipboard','Clipboard history','سجل الحافظة']],
+          answer:'secureboot'
+        },
+        govPatch: {
+          question:{ en:'What should administrators install to fix known software security weaknesses?', ar:'ما الذي ينبغي للمسؤولين تثبيته لإصلاح ثغرات الأمان المعروفة في البرامج؟' },
+          options:[['patch','Security patches and updates','تصحيحات وتحديثات أمنية'],['wallpaper','A new wallpaper','خلفية شاشة جديدة'],['font','A font package','حزمة خطوط']],
+          answer:'patch'
+        },
+        govBackup: {
+          question:{ en:'Which separate system helps restore files after ransomware damages the server?', ar:'أي نظام منفصل يساعد على استعادة الملفات بعد أن تتلف برمجية الفدية بيانات الخادم؟' },
+          options:[['backup','An offline, tested backup','نسخة احتياطية منفصلة ومختبرة'],['share','A public shared folder','مجلد عام مشترك'],['mirror','A mirror always connected with write access','نسخة متزامنة متصلة دائمًا بصلاحية الكتابة']],
+          answer:'backup'
+        }
+      };
+      const levels = [
+        { systemKey:'systemPersonal', difficultyKey:'difficultyTraining', speed:75, radius:84, wrongPenalty:14, puzzles:['pcCpu','pcRam'] },
+        { systemKey:'systemOffice', difficultyKey:'difficultyEasy', speed:88, radius:92, wrongPenalty:16, puzzles:['officeRouter','officeOs','officePrinter'] },
+        { systemKey:'systemBank', difficultyKey:'difficultyMedium', speed:101, radius:100, wrongPenalty:18, puzzles:['bankSsd','bankEncryption','bankFirewall','bankCooling'] },
+        { systemKey:'systemCloud', difficultyKey:'difficultyHard', speed:114, radius:108, wrongPenalty:20, puzzles:['cloudVirtual','cloudRaid','cloudLinux','cloudBackup'] },
+        { systemKey:'systemGovernment', difficultyKey:'difficultyExpert', speed:128, radius:116, wrongPenalty:22, puzzles:['govTpm','govMfa','govSecureBoot','govPatch','govBackup'] }
+      ];
+
+      function renderStageText() {
+        const level = levels[state.levelIndex];
+        const stageNumber = state.levelIndex + 1;
+        ui.levelTitle.textContent = `/ ${stageNumber}: ${t(level.systemKey)}`;
+        ui.missionStatus.textContent = t('stageStatus', {
+          number: stageNumber,
+          difficulty: t(level.difficultyKey)
+        });
+        const puzzle = puzzleBank[level.puzzles[Math.min(state.puzzleIndex, level.puzzles.length - 1)]];
+        ui.puzzlePrompt.textContent = puzzle.question[language];
+        ui.answerList.replaceChildren(...puzzle.options.map(([answer, englishLabel, arabicLabel]) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'button button-secondary answer-button';
+          button.dataset.answer = answer;
+          button.textContent = language === 'ar' ? arabicLabel : englishLabel;
+          return button;
+        }));
+        ui.resultEyebrow.textContent = t('resultStageEyebrow', {
+          number: stageNumber,
+          system: t(level.systemKey)
+        });
+        if (state.result === 'won') {
+          ui.resultCopy.textContent = state.levelIndex === levels.length - 1
+            ? t('campaignWonCopy')
+            : t('stageWonCopy', { system: t(level.systemKey) });
+        } else if (state.result === 'lost') {
+          ui.resultCopy.textContent = t('stageLostCopy', { system: t(level.systemKey) });
+        }
+        const finalStageWon = state.result === 'won' && state.levelIndex === levels.length - 1;
+        document.getElementById('retry-button').textContent =
+          state.result === 'won' && !finalStageWon ? t('nextStage') : finalStageWon ? t('replayCampaign') : t('retry');
+      }
+
+      const VIEWPORT = { width: 960, height: 540 };
+      const WORLD = { width: 960, height: 540 };
+      const camera = { x: 0 };
+      const player = { x: 88, y: 270, radius: 11, speed: 205 };
+      const scanner = { units: [], disabled: 0 };
+      const files = [];
+      const gates = [];
+      const objects = {
+        terminal: { x: 530, y: 270, radius: 24, active: true },
+        checkpoint: { x: 700, y: 270, radius: 23, active: false },
+        exit: { x: 882, y: 270, radius: 28, active: true }
+      };
+      const walls = [];
+      const state = {
+        screen: 'menu',
+        detection: 0,
+        stability: 100,
+        hiding: false,
+        puzzleSolved: false,
+        puzzleIndex: 0,
+        checkpoint: { x: 88, y: 270 },
+        decoy: null,
+        cloneCooldown: 0,
+        checkpointReached: false,
+        result: '',
+        levelIndex: 0,
+        lastTime: 0,
+        keys: new Set()
+      };
+      let soundEnabled = false;
+      let audio = null;
+      let musicNodes = null;
+
+      function showScreen(name) {
+        Object.entries(screens).forEach(([key, screen]) => {
+          screen.classList.toggle('active', key === name);
+        });
+        state.screen = name;
+      }
+
+      function message(key, params = {}) {
+        currentMessage = key;
+        currentMessageParams = params;
+        ui.message.textContent = t(key, params);
+      }
+
+      function playSound(frequency = 440, duration = 0.12, type = 'sine') {
+        if (!soundEnabled) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        audio = audio || new AudioContext();
+        if (audio.state === 'suspended') audio.resume();
+        const oscillator = audio.createOscillator();
+        const gain = audio.createGain();
+        oscillator.type = type;
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(0.045, audio.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + duration);
+        oscillator.connect(gain);
+        gain.connect(audio.destination);
+        oscillator.start();
+        oscillator.stop(audio.currentTime + duration);
+      }
+
+      function startMusic() {
+        if (!soundEnabled || musicNodes) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        audio = audio || new AudioContext();
+        if (audio.state === 'suspended') audio.resume();
+        const master = audio.createGain();
+        const lowTone = audio.createOscillator();
+        const highTone = audio.createOscillator();
+        const lowGain = audio.createGain();
+        const highGain = audio.createGain();
+        lowTone.type = 'sine';
+        lowTone.frequency.value = 55;
+        highTone.type = 'triangle';
+        highTone.frequency.value = 110.2;
+        lowGain.gain.value = 0.15;
+        highGain.gain.value = 0.035;
+        master.gain.value = 0.018;
+        lowTone.connect(lowGain);
+        highTone.connect(highGain);
+        lowGain.connect(master);
+        highGain.connect(master);
+        master.connect(audio.destination);
+        lowTone.start();
+        highTone.start();
+        musicNodes = { master, lowTone, highTone };
+      }
+
+      function stopMusic() {
+        if (!musicNodes || !audio) return;
+        const nodes = musicNodes;
+        musicNodes = null;
+        nodes.master.gain.setTargetAtTime(0, audio.currentTime, 0.04);
+        window.setTimeout(() => {
+          nodes.lowTone.stop();
+          nodes.highTone.stop();
+          nodes.master.disconnect();
+        }, 180);
+      }
+
+      function buildLevel() {
+        const level = levels[state.levelIndex];
+        const gateSpacing = 310;
+        gates.splice(0, gates.length, ...level.puzzles.map((_, index) => 320 + index * gateSpacing));
+        const exitX = gates[gates.length - 1] + 420;
+        WORLD.width = exitX + 70;
+        files.splice(0, files.length,
+          ...gates.map((gateX, index) => ({
+            x: gateX - 155,
+            y: index % 2 === 0 ? 270 : 360,
+            radius: 25,
+            active: true
+          })),
+          { x: exitX - 100, y: 180, radius: 25, active: true }
+        );
+        walls.splice(0, walls.length, ...gates.flatMap(gateX => [
+          { x: gateX - 10, y: 48, width: 20, height: 174 },
+          { x: gateX - 10, y: 318, width: 20, height: 174 }
+        ]));
+        objects.exit.x = exitX;
+        const checkpointGateIndex = Math.max(0, Math.floor(gates.length / 2) - 1);
+        objects.checkpoint.x = gates[checkpointGateIndex] + 90;
+        objects.checkpoint.y = 270;
+        objects.checkpoint.afterPuzzle = checkpointGateIndex + 1;
+        objects.terminal.x = gates[0] - 45;
+        objects.terminal.y = 270;
+
+        let segmentStart = 90;
+        scanner.units = gates.map((gateX, index) => {
+          const minX = segmentStart + 25;
+          const maxX = gateX - 35;
+          const unit = {
+            x: (minX + maxX) / 2,
+            y: [270, 180, 360][index % 3],
+            radius: level.radius,
+            speed: level.speed,
+            direction: index % 2 === 0 ? 1 : -1,
+            minX,
+            maxX
+          };
+          segmentStart = gateX + 35;
+          return unit;
+        });
+        const lastMin = gates[gates.length - 1] + 40;
+        const lastMax = exitX - 35;
+        scanner.units.push({
+          x: (lastMin + lastMax) / 2,
+          y: [180, 360, 270][gates.length % 3],
+          radius: level.radius,
+          speed: level.speed,
+          direction: -1,
+          minX: lastMin,
+          maxX: lastMax
+        });
+      }
+
+      function resetGame() {
+        player.x = 88;
+        player.y = 270;
+        const level = levels[state.levelIndex];
+        buildLevel();
+        camera.x = 0;
+        scanner.disabled = 0;
+        objects.terminal.active = true;
+        objects.checkpoint.active = false;
+        state.detection = 0;
+        state.stability = 100;
+        state.hiding = false;
+        state.puzzleSolved = false;
+        state.puzzleIndex = 0;
+        state.checkpoint = { x: 88, y: 270 };
+        state.decoy = null;
+        state.cloneCooldown = 0;
+        state.checkpointReached = false;
+        ui.puzzle.classList.remove('visible');
+        ui.pause.classList.remove('visible');
+        state.result = '';
+        state.keys.clear();
+        state.lastTime = performance.now();
+        ui.objective.textContent = t('objectiveStart');
+        ui.feedback.textContent = '';
+        delete ui.feedback.dataset.translationKey;
+        message('readyMessage');
+        ui.progress.textContent = t('routeProgress', { current: 0, total: level.puzzles.length });
+        ui.progressFill.style.width = '0%';
+        renderStageText();
+        showScreen('game');
+        playSound(560, 0.16);
+      }
+
+      function finishGame(won) {
+        state.result = won ? 'won' : 'lost';
+        state.keys.clear();
+        ui.resultTitle.textContent = t(won ? 'wonTitle' : 'lostTitle');
+        renderStageText();
+        showScreen('result');
+        playSound(won ? 780 : 150, 0.38, won ? 'triangle' : 'sawtooth');
+      }
+
+      function near(object, distance = 52) {
+        return Math.hypot(player.x - object.x, player.y - object.y) <= distance;
+      }
+
+      function interact() {
+        if (state.screen !== 'game' || ui.puzzle.classList.contains('visible') || ui.pause.classList.contains('visible')) return;
+
+        const nearbyFile = files.find(file => file.active && near(file));
+        if (nearbyFile) {
+          state.hiding = !state.hiding;
+          message(state.hiding ? 'hideEnter' : 'hideLeave');
+          playSound(state.hiding ? 330 : 500, 0.1);
+          return;
+        }
+        if (state.hiding) state.hiding = false;
+
+        if (near(objects.terminal) && objects.terminal.active) {
+          ui.feedback.textContent = '';
+          delete ui.feedback.dataset.translationKey;
+          renderStageText();
+          ui.puzzle.classList.add('visible');
+          message('terminalFoundProgress', {
+            current: state.puzzleIndex + 1,
+            total: levels[state.levelIndex].puzzles.length
+          });
+          playSound(520, 0.1);
+          return;
+        }
+        if (near(objects.checkpoint) && state.puzzleIndex >= objects.checkpoint.afterPuzzle && !state.checkpointReached) {
+          state.checkpointReached = true;
+          state.checkpoint = { x: objects.checkpoint.x, y: objects.checkpoint.y };
+          objects.checkpoint.active = true;
+          message('checkpointSaved');
+          playSound(660, 0.15);
+          return;
+        }
+        if (near(objects.exit)) {
+          if (state.puzzleSolved) finishGame(true);
+          else message('exitLocked');
+          return;
+        }
+        message('nothingNearby');
+      }
+
+      function solvePuzzle(answer) {
+        const level = levels[state.levelIndex];
+        const puzzle = puzzleBank[level.puzzles[state.puzzleIndex]];
+        if (answer === puzzle.answer) {
+          state.puzzleIndex++;
+          state.puzzleSolved = state.puzzleIndex >= level.puzzles.length;
+          renderStageText();
+          objects.terminal.active = !state.puzzleSolved;
+          if (!state.puzzleSolved) {
+            objects.terminal.x = gates[state.puzzleIndex] - 45;
+            objects.terminal.y = 270;
+          }
+          ui.progress.textContent = t('routeProgress', {
+            current: state.puzzleIndex,
+            total: level.puzzles.length
+          });
+          ui.progressFill.style.width = `${state.puzzleIndex / level.puzzles.length * 100}%`;
+          ui.objective.textContent = state.puzzleSolved
+            ? t('objectiveExit')
+            : t('objectivePuzzle', { current: state.puzzleIndex + 1, total: level.puzzles.length });
+          ui.feedback.dataset.translationKey = 'correctStageFeedback';
+          ui.feedback.textContent = t('correctStageFeedback');
+          message(state.puzzleSolved ? 'allRoutesOpen' : 'puzzleSolvedContinue', {
+            current: state.puzzleIndex,
+            total: level.puzzles.length
+          });
+          playSound(740, 0.2);
+          window.setTimeout(() => {
+            ui.puzzle.classList.remove('visible');
+            ui.feedback.textContent = '';
+            delete ui.feedback.dataset.translationKey;
+          }, 850);
+        } else {
+          state.detection = Math.min(100, state.detection + level.wrongPenalty);
+          ui.feedback.dataset.translationKey = 'wrongAnswer';
+          ui.feedback.textContent = t(ui.feedback.dataset.translationKey);
+          message('rejectedRule');
+          playSound(190, 0.22, 'square');
+          if (state.detection >= 100) finishGame(false);
+        }
+      }
+
+      function activateDisable() {
+        if (state.screen !== 'game' || ui.puzzle.classList.contains('visible') || ui.pause.classList.contains('visible')) return;
+        if (scanner.disabled > 0) {
+          message('scannerDisabled', { seconds: Math.ceil(scanner.disabled) });
+          return;
+        }
+        scanner.disabled = 5;
+        message('scannerDisabledNow');
+        playSound(300, 0.28, 'triangle');
+      }
+
+      function activateClone() {
+        if (state.screen !== 'game' || ui.puzzle.classList.contains('visible') || ui.pause.classList.contains('visible')) return;
+        if (state.cloneCooldown > 0) {
+          message('cloneRecharging', { seconds: Math.ceil(state.cloneCooldown) });
+          return;
+        }
+        state.decoy = { x: player.x, y: player.y, time: 6 };
+        state.cloneCooldown = 12;
+        message('cloneCreated');
+        playSound(620, 0.12, 'triangle');
+      }
+
+      function solidRects() {
+        const rects = [
+          ...walls,
+          { x: 30, y: 30, width: WORLD.width - 60, height: 18 },
+          { x: 30, y: 492, width: WORLD.width - 60, height: 18 }
+        ];
+        gates.forEach((gateX, index) => {
+          if (state.puzzleIndex <= index) rects.push({ x: gateX - 10, y: 222, width: 20, height: 96 });
+        });
+        return rects;
+      }
+
+      function collides(x, y) {
+        if (x - player.radius < 30 || x + player.radius > WORLD.width - 30 || y - player.radius < 48 || y + player.radius > 492) return true;
+        return solidRects().some(rect =>
+          x + player.radius > rect.x &&
+          x - player.radius < rect.x + rect.width &&
+          y + player.radius > rect.y &&
+          y - player.radius < rect.y + rect.height
+        );
+      }
+
+      function movePlayer(dx, dy) {
+        const nextX = player.x + dx;
+        if (!collides(nextX, player.y)) player.x = nextX;
+        const nextY = player.y + dy;
+        if (!collides(player.x, nextY)) player.y = nextY;
+      }
+
+      function update(dt) {
+        if (state.screen !== 'game' || ui.puzzle.classList.contains('visible') || ui.pause.classList.contains('visible')) return;
+
+        let dx = 0;
+        let dy = 0;
+        if (state.keys.has('ArrowLeft') || state.keys.has('a')) dx -= 1;
+        if (state.keys.has('ArrowRight') || state.keys.has('d')) dx += 1;
+        if (state.keys.has('ArrowUp') || state.keys.has('w')) dy -= 1;
+        if (state.keys.has('ArrowDown') || state.keys.has('s')) dy += 1;
+        if (dx !== 0 || dy !== 0) {
+          const length = Math.hypot(dx, dy);
+          movePlayer(dx / length * player.speed * dt, dy / length * player.speed * dt);
+          state.hiding = false;
+        }
+
+        if (scanner.disabled > 0) scanner.disabled = Math.max(0, scanner.disabled - dt);
+        if (state.cloneCooldown > 0) state.cloneCooldown = Math.max(0, state.cloneCooldown - dt);
+        if (state.decoy) {
+          state.decoy.time -= dt;
+          if (state.decoy.time <= 0) state.decoy = null;
+        }
+
+        scanner.units.forEach(unit => {
+          if (scanner.disabled > 0) return;
+          if (state.decoy) {
+            const playerDistance = Math.hypot(player.x - unit.x, player.y - unit.y);
+            const cloneDistance = Math.hypot(state.decoy.x - unit.x, state.decoy.y - unit.y);
+            if (cloneDistance < playerDistance) {
+              unit.x += Math.sign(state.decoy.x - unit.x) * Math.min(Math.abs(state.decoy.x - unit.x), unit.speed * 1.5 * dt);
+              return;
+            }
+          }
+          unit.x += unit.direction * unit.speed * dt;
+          if (unit.x > unit.maxX) unit.direction = -1;
+          if (unit.x < unit.minX) unit.direction = 1;
+        });
+
+        const detected = !state.hiding && scanner.disabled <= 0 && scanner.units.some(unit => {
+          const playerDistance = Math.hypot(player.x - unit.x, player.y - unit.y);
+          const cloneDistracts = state.decoy &&
+            Math.hypot(state.decoy.x - unit.x, state.decoy.y - unit.y) < playerDistance;
+          return !cloneDistracts && playerDistance < unit.radius;
+        });
+        const difficultyMultiplier = 1 + state.levelIndex * 0.12;
+        if (detected) {
+          state.detection = Math.min(100, state.detection + 16 * difficultyMultiplier * dt);
+          state.stability = Math.max(0, state.stability - 9 * difficultyMultiplier * dt);
+        } else {
+          state.detection = Math.max(0, state.detection - 7 * dt);
+          state.stability = Math.min(100, state.stability + 2 * dt);
+        }
+
+        if (state.detection >= 100 || state.stability <= 0) {
+          if (state.checkpointReached) {
+            player.x = state.checkpoint.x;
+            player.y = state.checkpoint.y;
+            state.detection = 35;
+            state.stability = 65;
+            state.hiding = false;
+            state.decoy = null;
+            message('detectedCheckpoint');
+            playSound(160, 0.25, 'square');
+          } else {
+            finishGame(false);
+          }
+        }
+
+        camera.x = Math.max(0, Math.min(player.x - VIEWPORT.width * 0.42, WORLD.width - VIEWPORT.width));
+        updateHud();
+      }
+
+      function updateHud() {
+        const detection = Math.round(state.detection);
+        const stability = Math.round(state.stability);
+        ui.detection.textContent = `${detection}%`;
+        ui.detectionFill.style.width = `${detection}%`;
+        ui.stability.textContent = `${stability}%`;
+        ui.stabilityFill.style.width = `${stability}%`;
+        ui.disableAbility.classList.toggle('cooldown', scanner.disabled > 0);
+        ui.disableAbility.classList.toggle('ready', scanner.disabled <= 0);
+        ui.cloneAbility.classList.toggle('cooldown', state.cloneCooldown > 0);
+        ui.cloneAbility.classList.toggle('ready', state.cloneCooldown <= 0);
+      }
+
+      function drawGrid() {
+        ctx.fillStyle = '#07121e';
+        ctx.fillRect(camera.x, 0, VIEWPORT.width, VIEWPORT.height);
+        ctx.strokeStyle = 'rgba(66, 150, 197, .09)';
+        ctx.lineWidth = 1;
+        const firstGridX = Math.floor(camera.x / 32) * 32;
+        for (let x = firstGridX; x <= camera.x + VIEWPORT.width; x += 32) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, WORLD.height); ctx.stroke();
+        }
+        for (let y = 0; y <= WORLD.height; y += 32) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(WORLD.width, y); ctx.stroke();
+        }
+        ctx.strokeStyle = 'rgba(56, 217, 255, .28)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(30, 48, WORLD.width - 60, 444);
+      }
+
+      function drawWalls() {
+        solidRects().forEach(rect => {
+          ctx.fillStyle = '#18283b';
+          ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+          ctx.strokeStyle = 'rgba(119, 143, 179, .52)';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(rect.x + 1, rect.y + 1, rect.width - 2, rect.height - 2);
+        });
+
+        ctx.save();
+        ctx.shadowBlur = 16;
+        ctx.lineWidth = 4;
+        gates.forEach((gateX, index) => {
+          const isOpen = state.puzzleIndex > index;
+          ctx.shadowColor = isOpen ? '#60f2aa' : '#bc76ff';
+          ctx.strokeStyle = isOpen ? '#60f2aa' : '#bc76ff';
+          if (!isOpen) {
+            ctx.beginPath(); ctx.moveTo(gateX - 10, 226); ctx.lineTo(gateX - 10, 314); ctx.stroke();
+            for (let y = 235; y < 310; y += 18) {
+              ctx.beginPath(); ctx.moveTo(gateX - 18, y); ctx.lineTo(gateX - 2, y + 10); ctx.stroke();
+            }
+          } else {
+            ctx.beginPath(); ctx.moveTo(gateX - 10, 230); ctx.lineTo(gateX - 10, 310); ctx.stroke();
+          }
+        });
+        ctx.restore();
+      }
+
+      function drawNode(x, y, color, label, size = 20, active = true) {
+        if (!active) return;
+        ctx.save();
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 22;
+        ctx.fillStyle = `${color}22`;
+        ctx.beginPath(); ctx.arc(x, y, size + 10, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = color;
+        ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#07121e';
+        ctx.font = 'bold 11px Segoe UI, Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.direction = language === 'ar' ? 'rtl' : 'ltr';
+        ctx.fillText(label, x, y);
+        ctx.restore();
+      }
+
+      function drawObjects() {
+        drawNode(88, 270, '#38d9ff', t('canvasIn'), 17);
+        files.forEach(file => drawNode(file.x, file.y, '#60f2aa', t('canvasFile'), 22, file.active));
+        drawNode(objects.terminal.x, objects.terminal.y, '#bc76ff', t('canvasPort'), 21, objects.terminal.active);
+        const checkpointUnlocked = state.puzzleIndex >= objects.checkpoint.afterPuzzle;
+        drawNode(objects.checkpoint.x, objects.checkpoint.y, state.checkpointReached ? '#60f2aa' : '#bc76ff', t('canvasSave'), 19, checkpointUnlocked);
+        drawNode(objects.exit.x, objects.exit.y, '#ffd56a', t('canvasExit'), 23, true);
+
+        ctx.save();
+        ctx.setLineDash([8, 8]);
+        ctx.strokeStyle = 'rgba(96, 242, 170, .4)';
+        ctx.lineWidth = 3;
+        gates.forEach((gateX, index) => {
+          if (state.puzzleIndex > index) {
+            ctx.beginPath(); ctx.moveTo(gateX + 10, 270); ctx.lineTo(gates[index + 1] ?? objects.exit.x, 270); ctx.stroke();
+          }
+        });
+        ctx.restore();
+
+        ctx.fillStyle = '#a8b9cd';
+        ctx.font = '12px Segoe UI, Arial';
+        ctx.textAlign = 'center';
+        ctx.direction = language === 'ar' ? 'rtl' : 'ltr';
+        ctx.fillText(t('canvasSpawn'), 88, 310);
+        files.forEach(file => ctx.fillText(t('canvasHide'), file.x, file.y + 48));
+        if (objects.terminal.active) ctx.fillText(t('canvasPuzzle'), objects.terminal.x, 309);
+        if (checkpointUnlocked) ctx.fillText(t(state.checkpointReached ? 'canvasCheckpointSaved' : 'canvasCheckpoint'), objects.checkpoint.x, 307);
+        ctx.fillText(t('canvasExit'), objects.exit.x, 310);
+      }
+
+      function drawScanner() {
+        scanner.units.forEach(drawScannerUnit);
+      }
+
+      function drawScannerUnit(unit) {
+        ctx.save();
+        if (scanner.disabled > 0) {
+          ctx.globalAlpha = .25;
+          ctx.fillStyle = '#60f2aa';
+          ctx.fillRect(unit.x - 14, unit.y - 24, 28, 48);
+          ctx.restore();
+          return;
+        }
+        ctx.fillStyle = 'rgba(56, 217, 255, .08)';
+        ctx.beginPath(); ctx.arc(unit.x, unit.y, unit.radius, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(56, 217, 255, .28)';
+        ctx.setLineDash([6, 8]);
+        ctx.beginPath(); ctx.arc(unit.x, unit.y, unit.radius, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.shadowColor = '#ff5478';
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#ff5478';
+        ctx.beginPath(); ctx.moveTo(unit.x, unit.y - 17); ctx.lineTo(unit.x + 16, unit.y); ctx.lineTo(unit.x, unit.y + 17); ctx.lineTo(unit.x - 16, unit.y); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+
+      function drawPlayer() {
+        if (state.decoy) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(.18, state.decoy.time / 6);
+          ctx.strokeStyle = '#bc76ff';
+          ctx.lineWidth = 3;
+          ctx.shadowColor = '#bc76ff';
+          ctx.shadowBlur = 16;
+          ctx.beginPath(); ctx.arc(state.decoy.x, state.decoy.y, 13 + Math.sin(performance.now() / 100) * 3, 0, Math.PI * 2); ctx.stroke();
+          ctx.restore();
+        }
+        if (state.hiding) return;
+        ctx.save();
+        ctx.shadowColor = '#38d9ff';
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#b5f5ff';
+        ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#38d9ff';
+        ctx.beginPath(); ctx.arc(player.x, player.y, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, VIEWPORT.width, VIEWPORT.height);
+        ctx.save();
+        ctx.translate(-camera.x, 0);
+        drawGrid();
+        drawWalls();
+        drawObjects();
+        drawScanner();
+        drawPlayer();
+        ctx.restore();
+      }
+
+      function loop(time) {
+        const dt = Math.min((time - (state.lastTime || time)) / 1000, .04);
+        state.lastTime = time;
+        update(dt);
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      function pauseGame() {
+        if (state.screen !== 'game' || ui.puzzle.classList.contains('visible')) return;
+        state.keys.clear();
+        ui.pause.classList.add('visible');
+      }
+
+      function resumeGame() {
+        ui.pause.classList.remove('visible');
+        state.lastTime = performance.now();
+      }
+
+      document.getElementById('start-button').addEventListener('click', () => {
+        state.levelIndex = 0;
+        resetGame();
+      });
+      document.getElementById('retry-button').addEventListener('click', () => {
+        if (state.result === 'won') {
+          state.levelIndex = state.levelIndex === levels.length - 1 ? 0 : state.levelIndex + 1;
+        }
+        resetGame();
+      });
+      document.getElementById('menu-button').addEventListener('click', () => showScreen('menu'));
+      document.getElementById('pause-button').addEventListener('click', pauseGame);
+      document.getElementById('resume-button').addEventListener('click', resumeGame);
+      document.getElementById('quit-button').addEventListener('click', () => {
+        ui.pause.classList.remove('visible');
+        showScreen('menu');
+      });
+      document.getElementById('close-puzzle').addEventListener('click', () => ui.puzzle.classList.remove('visible'));
+      ui.answerList.addEventListener('click', event => {
+        const button = event.target.closest('.answer-button');
+        if (button) solvePuzzle(button.dataset.answer);
+      });
+      document.getElementById('sound-button').addEventListener('click', event => {
+        soundEnabled = !soundEnabled;
+        event.currentTarget.textContent = t(soundEnabled ? 'soundOn' : 'soundOff');
+        event.currentTarget.setAttribute('aria-pressed', String(soundEnabled));
+        if (soundEnabled) {
+          startMusic();
+          playSound(660, .14);
+        } else {
+          stopMusic();
+        }
+      });
+      ui.languageButton.addEventListener('click', () => {
+        language = language === 'en' ? 'ar' : 'en';
+        localStorage.setItem('firewall-breakout-language', language);
+        applyLanguage();
+      });
+
+      function getControlKey(event) {
+        const physicalKeys = {
+          KeyW: 'w',
+          KeyA: 'a',
+          KeyS: 's',
+          KeyD: 'd',
+          KeyE: 'e',
+          KeyQ: 'q',
+          KeyC: 'c'
+        };
+        return physicalKeys[event.code] || event.key;
+      }
+
+      window.addEventListener('keydown', event => {
+        const controlKey = getControlKey(event);
+        const key = controlKey.length === 1 ? controlKey.toLowerCase() : controlKey;
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(event.key)) event.preventDefault();
+        if (event.key === 'Escape') {
+          if (ui.puzzle.classList.contains('visible')) ui.puzzle.classList.remove('visible');
+          else if (ui.pause.classList.contains('visible')) resumeGame();
+          else pauseGame();
+          return;
+        }
+        if (state.screen !== 'game') return;
+        if (key === 'e' && !event.repeat) interact();
+        else if (key === 'q' && !event.repeat) activateDisable();
+        else if (key === 'c' && !event.repeat) activateClone();
+        else state.keys.add(key);
+      });
+
+      window.addEventListener('keyup', event => {
+        const controlKey = getControlKey(event);
+        const key = controlKey.length === 1 ? controlKey.toLowerCase() : controlKey;
+        state.keys.delete(key);
+      });
+      window.addEventListener('blur', () => state.keys.clear());
+
+      applyLanguage();
+      updateHud();
+      draw();
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
